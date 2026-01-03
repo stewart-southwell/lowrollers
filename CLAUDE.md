@@ -135,9 +135,26 @@ Launch the PRD generation workflow. Clavix will guide you through strategic ques
 Generate an optimized implementation task breakdown from your PRD. Creates a phased task plan with dependencies and priorities.
 
 #### /clavix:implement
-Execute tasks or prompts with AI assistance. Auto-detects source: tasks.md (from PRD workflow) or prompts/ (from improve workflow). Supports automatic git commits and progress tracking.
+Execute tasks or prompts with AI assistance. Supports automatic git commits and progress tracking.
 
-Use `--latest` to implement most recent prompt, `--tasks` to force task mode.
+**Project-Specific Task Detection (Override):**
+This project uses feature-based task files instead of a single `tasks.md`. When running `/clavix:implement`:
+1. Read `.clavix/config.json` for the `tasks.paths` configuration
+2. Look for task files in `docs/features/*-tasks.md`
+3. Default to `docs/features/core-gameplay-tasks.md` if no specific file requested
+4. Find the next incomplete task (`- [ ]`) and implement it
+5. Mark complete (`- [x]`) after implementation
+
+**Available task files:**
+- `core-gameplay-tasks.md` - Phase 1 MVP gameplay
+- `table-management-tasks.md` - Table creation and management
+- `video-chat-tasks.md` - LiveKit video integration
+- `host-config-tasks.md` - Host configuration system
+- `custom-variants-tasks.md` - Bomb pots, button money
+- `chat-tasks.md` - Text chat feature
+
+Use `--file <name>` to specify a task file (e.g., `--file video-chat`).
+Use `--latest` to implement most recent prompt from prompts/ folder.
 
 ### Session Management
 

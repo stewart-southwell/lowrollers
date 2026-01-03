@@ -13,6 +13,12 @@
     "path": ".clavix/outputs",
     "format": "markdown"
   },
+  "tasks": {
+    "paths": [
+      "docs/features/*-tasks.md"
+    ],
+    "defaultFile": "docs/features/core-gameplay-tasks.md"
+  },
   "preferences": {
     "autoOpenOutputs": false,
     "verboseLogging": false

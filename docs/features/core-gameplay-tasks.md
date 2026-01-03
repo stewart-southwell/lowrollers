@@ -54,7 +54,7 @@
   > - Guards for valid transitions only
   > - Logging for state changes
 
-- [ ] **Implement betting logic**
+- [x] **Implement betting logic**
   Task ID: `core-gameplay-05`
   > **Implementation**: Create `src/LowRollers.Api/Domain/Betting/`
   > **Details**:
