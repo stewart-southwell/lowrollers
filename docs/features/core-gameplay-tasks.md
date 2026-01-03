@@ -18,7 +18,7 @@
   > - `Hand.cs` - Id, Phase, Pot, SidePots, CommunityCards, ButtonPosition
   > - `Pot.cs` - Amount, EligiblePlayers, Type (Main/Side)
 
-- [ ] **Integrate HoldemPoker.Evaluator library**
+- [x] **Integrate HoldemPoker.Evaluator library**
   Task ID: `core-gameplay-02`
   > **Implementation**: Create `src/LowRollers.Api/Domain/Evaluation/`
   > **Details**:
