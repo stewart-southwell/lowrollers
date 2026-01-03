@@ -35,7 +35,7 @@
   > - Library uses hashtable-cached lookups for few-cycle performance
   > - Unit tests verify correct integration with library
 
-- [ ] **Implement cryptographic shuffle**
+- [x] **Implement cryptographic shuffle**
   Task ID: `core-gameplay-03`
   > **Implementation**: Create `src/LowRollers.Api/Domain/Services/ShuffleService.cs`
   > **Details**:

@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+using LowRollers.Api.Domain.Services;
 
 namespace LowRollers.Api.Domain.Models;
 
@@ -8,22 +8,26 @@ namespace LowRollers.Api.Domain.Models;
 public sealed class Deck
 {
     private readonly List<Card> _cards;
+    private readonly IShuffleService _shuffleService;
     private int _dealIndex;
 
     /// <summary>
-    /// Creates a new deck with all 52 cards in order.
+    /// Creates a new deck with all 52 cards in order, using the provided shuffle service.
     /// </summary>
-    public Deck()
+    /// <param name="shuffleService">Service for cryptographic shuffling.</param>
+    public Deck(IShuffleService shuffleService)
     {
+        ArgumentNullException.ThrowIfNull(shuffleService);
+        _shuffleService = shuffleService;
         _cards = new List<Card>(52);
-        foreach (Suit suit in Enum.GetValues<Suit>())
-        {
-            foreach (Rank rank in Enum.GetValues<Rank>())
-            {
-                _cards.Add(new Card(suit, rank));
-            }
-        }
-        _dealIndex = 0;
+        InitializeCards();
+    }
+
+    /// <summary>
+    /// Creates a new deck with all 52 cards in order, using the default shuffle service.
+    /// </summary>
+    public Deck() : this(new ShuffleService())
+    {
     }
 
     /// <summary>
@@ -32,19 +36,18 @@ public sealed class Deck
     public int CardsRemaining => _cards.Count - _dealIndex;
 
     /// <summary>
+    /// Gets a read-only view of all cards in current order (for verification/testing).
+    /// </summary>
+    public IReadOnlyList<Card> Cards => _cards.AsReadOnly();
+
+    /// <summary>
     /// Shuffles the deck using Fisher-Yates algorithm with cryptographically secure RNG.
     /// Resets the deal position to the top of the deck.
     /// </summary>
     public void Shuffle()
     {
         _dealIndex = 0;
-
-        // Fisher-Yates shuffle with crypto RNG
-        for (int i = _cards.Count - 1; i > 0; i--)
-        {
-            int j = RandomNumberGenerator.GetInt32(i + 1);
-            (_cards[i], _cards[j]) = (_cards[j], _cards[i]);
-        }
+        _shuffleService.Shuffle(_cards);
     }
 
     /// <summary>
@@ -95,6 +98,12 @@ public sealed class Deck
     public void Reset()
     {
         _cards.Clear();
+        InitializeCards();
+        _dealIndex = 0;
+    }
+
+    private void InitializeCards()
+    {
         foreach (Suit suit in Enum.GetValues<Suit>())
         {
             foreach (Rank rank in Enum.GetValues<Rank>())
@@ -102,6 +111,5 @@ public sealed class Deck
                 _cards.Add(new Card(suit, rank));
             }
         }
-        _dealIndex = 0;
     }
 }
