@@ -108,7 +108,7 @@ Development is structured in 4 phases. Each phase builds on the previous.
 - Full betting rounds: fold, check, call, raise, all-in
 - Community cards: flop (3), turn (1), river (1)
 - Pot management with side pot calculations
-- Hand evaluation and showdown logic (last aggressor shows first, muck option)
+- Hand evaluation using **HoldemPoker.Evaluator** library (showdown logic: last aggressor shows first, muck option)
 - Server-authoritative game state (client sends intents, server validates)
 - Cryptographically secure RNG with Fisher-Yates shuffle
 
@@ -158,6 +158,11 @@ Development is structured in 4 phases. Each phase builds on the previous.
 - **Framework:** .NET 10.0 / ASP.NET Core Web API 10.0 (C#)
 - **Real-time:** SignalR (WebSockets with automatic fallback)
 - **Pattern:** Lightweight CQRS—separate command handlers (PlayerAction, CreateTable) from query handlers (GetHandHistory, GetTableState). No MediatR, just organized folders.
+- **Hand Evaluation:** HoldemPoker.Evaluator (NuGet package)
+  - Package: `HoldemPoker.Evaluator` v1.0.1+ (Apache 2.0 license)
+  - Dependency: `HoldemPoker.Cards` (>= 0.0.1)
+  - API: `GetHandRanking()` for comparisons, `GetHandCategory()` for hand type, `GetHandDescription()` for display
+  - Performance: Hashtable-cached lookups, evaluates hands in few CPU cycles
 
 #### Video Chat
 - **Approach:** Self-hosted WebRTC SFU using LiveKit
@@ -215,8 +220,18 @@ Development is structured in 4 phases. Each phase builds on the previous.
 
 #### Testing Strategy
 - **Coverage Target:** 80%
-- **Unit Tests:** Hand evaluation, pot/side-pot calculation, FSM transitions, shuffle verification
+- **Unit Tests:** Hand evaluation integration (HoldemPoker.Evaluator), pot/side-pot calculation, FSM transitions, shuffle verification
 - **Integration Tests:** Full hand scenarios, reconnection flows, bomb pot triggers
+- **Note:** Hand ranking logic tested via library integration; focus unit tests on pot distribution and game flow
+
+#### UI Design Workflow
+- **Design-First Approach:** All UI components require visual approval before implementation
+- **Mockup Options:**
+  - Agent generates a visual mockup for user approval, OR
+  - User provides a screenshot/design reference to emulate
+- **Approval Gate:** No UI implementation begins until design is approved
+- **Design Reference:** Approved mockups/screenshots stored in `docs/designs/` for implementation reference
+- **Iteration:** User may request design changes before approving
 
 ---
 
@@ -260,6 +275,29 @@ Friends can play a full evening session (4+ hours) with bomb pots and button mon
 ---
 
 ## Refinement History
+
+### January 3, 2026 (Update 2)
+
+**Changes:**
+- [ADDED] UI Design Workflow section in Architecture & Design
+- [ADDED] Design-first approach requirement for all UI components
+- [ADDED] Mockup approval gate before UI implementation
+- [ADDED] `docs/designs/` as storage location for approved designs
+
+**Why:** Ensure UI components match user expectations before implementation. Allows user to provide reference designs or approve generated mockups before coding begins.
+
+---
+
+### January 3, 2026
+
+**Changes:**
+- [ADDED] HoldemPoker.Evaluator library specification in Backend requirements
+- [MODIFIED] Core gameplay section to reference HoldemPoker.Evaluator for hand evaluation
+- [MODIFIED] Testing strategy to note library handles hand ranking logic
+
+**Why:** Use established, high-performance NuGet library for hand evaluation instead of custom implementation. HoldemPoker.Evaluator provides hashtable-cached lookups with few-cycle evaluation performance, Apache 2.0 licensed.
+
+---
 
 ### January 1, 2026
 

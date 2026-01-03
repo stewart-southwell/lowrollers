@@ -41,6 +41,12 @@
 
 ## Angular Integration
 
+> **DESIGN APPROVAL REQUIRED**: Before implementing any UI component below (video-05 through video-10), either:
+> 1. Agent presents a generated mockup for user approval, OR
+> 2. User provides a screenshot/design reference to emulate
+>
+> Approved designs are stored in `docs/designs/` for implementation reference.
+
 - [ ] **Create video service**
   Task ID: `video-04`
   > **Implementation**: Create `src/LowRollers.Web/src/app/core/services/video.service.ts`

@@ -76,6 +76,12 @@
 
 ## Angular Configuration UI
 
+> **DESIGN APPROVAL REQUIRED**: Before implementing any UI component below, either:
+> 1. Agent presents a generated mockup for user approval, OR
+> 2. User provides a screenshot/design reference to emulate
+>
+> Approved designs are stored in `docs/designs/` for implementation reference.
+
 - [ ] **Create table settings form**
   Task ID: `config-06`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/table/configuration/table-settings/`
@@ -129,6 +135,8 @@
 
 ## Template Manager UI
 
+> **DESIGN APPROVAL REQUIRED** (see Angular Configuration UI section above)
+
 - [ ] **Create template manager component**
   Task ID: `config-11`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/table/configuration/template-manager/`
@@ -144,6 +152,8 @@
 ---
 
 ## Voting UI
+
+> **DESIGN APPROVAL REQUIRED** (see Angular Configuration UI section above)
 
 - [ ] **Create settings change vote dialog**
   Task ID: `config-12`

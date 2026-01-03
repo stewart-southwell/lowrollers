@@ -58,6 +58,12 @@
 
 ## Angular Components
 
+> **DESIGN APPROVAL REQUIRED**: Before implementing any UI component below, either:
+> 1. Agent presents a generated mockup for user approval, OR
+> 2. User provides a screenshot/design reference to emulate
+>
+> Approved designs are stored in `docs/designs/` for implementation reference.
+
 - [ ] **Create chat panel component**
   Task ID: `chat-05`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/chat/chat-panel/`

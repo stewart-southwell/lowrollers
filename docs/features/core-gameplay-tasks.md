@@ -8,7 +8,7 @@
 
 ## Domain Models & Game Engine
 
-- [ ] **Create core domain models**
+- [x] **Create core domain models**
   Task ID: `core-gameplay-01`
   > **Implementation**: Create `src/LowRollers.Api/Domain/Models/`
   > **Details**:
@@ -18,15 +18,22 @@
   > - `Hand.cs` - Id, Phase, Pot, SidePots, CommunityCards, ButtonPosition
   > - `Pot.cs` - Amount, EligiblePlayers, Type (Main/Side)
 
-- [ ] **Implement hand evaluation engine**
+- [ ] **Integrate HoldemPoker.Evaluator library**
   Task ID: `core-gameplay-02`
   > **Implementation**: Create `src/LowRollers.Api/Domain/Evaluation/`
   > **Details**:
-  > - `HandRank.cs` - Enum: HighCard, Pair, TwoPair, ThreeOfAKind, Straight, Flush, FullHouse, FourOfAKind, StraightFlush, RoyalFlush
-  > - `EvaluatedHand.cs` - HandRank, Kickers[], Description
-  > - `HandEvaluator.cs` - Evaluate 7 cards → best 5-card hand
-  > - Use lookup tables for performance
-  > - Comprehensive unit tests for all hand types and edge cases
+  > - Install NuGet packages:
+  >   - `HoldemPoker.Evaluator` (v1.0.1+)
+  >   - `HoldemPoker.Cards` (>= 0.0.1)
+  > - Create `HandEvaluationService.cs` - Wrapper service around HoldemPoker.Evaluator
+  > - Map domain `Card` model to `HoldemPoker.Cards` types
+  > - Use library API:
+  >   - `HoldemHandEvaluator.GetHandRanking()` - Integer rank (lower = better)
+  >   - `HoldemHandEvaluator.GetHandCategory()` - Hand type (Flush, Pair, etc.)
+  >   - `HoldemHandEvaluator.GetHandDescription()` - Display text ("Pair of Kings")
+  > - Create `EvaluatedHand.cs` - Wrapper record with Ranking, Category, Description
+  > - Library uses hashtable-cached lookups for few-cycle performance
+  > - Unit tests verify correct integration with library
 
 - [ ] **Implement cryptographic shuffle**
   Task ID: `core-gameplay-03`
@@ -106,12 +113,15 @@
   Task ID: `core-gameplay-09`
   > **Implementation**: Create `src/LowRollers.Api/Features/GameEngine/Showdown/ShowdownHandler.cs`
   > **Details**:
+  > - Inject `HandEvaluationService` for hand comparisons
   > - Determine show order:
   >   - Last aggressor shows first
   >   - If all checked, first-to-act shows first
-  > - Evaluate clockwise, auto-muck inferior hands
+  > - Evaluate clockwise using `GetHandRanking()` (lower = better)
+  > - Auto-muck inferior hands based on ranking comparison
   > - Allow muck option for losers
   > - Track who showed/mucked for history
+  > - Use `GetHandDescription()` for winner announcement text
   > - Calculate winners per pot
   > - Distribute pots correctly
 
@@ -157,6 +167,12 @@
 ---
 
 ## Angular Components
+
+> **DESIGN APPROVAL REQUIRED**: Before implementing any UI component below, either:
+> 1. Agent presents a generated mockup for user approval, OR
+> 2. User provides a screenshot/design reference to emulate
+>
+> Approved designs are stored in `docs/designs/` for implementation reference.
 
 - [ ] **Create poker table component**
   Task ID: `core-gameplay-13`
@@ -245,15 +261,17 @@
 
 ## Testing
 
-- [ ] **Create hand evaluation unit tests**
+- [ ] **Create hand evaluation integration tests**
   Task ID: `core-gameplay-21`
   > **Implementation**: Create `tests/LowRollers.Api.Tests/Domain/Evaluation/`
   > **Details**:
-  > - Test all hand types correctly identified
-  > - Test kicker comparisons
-  > - Test ties correctly detected
-  > - Test 7-card to 5-card selection
-  > - Edge cases: wheel straight, A-high vs K-high, etc.
+  > - Test `HandEvaluationService` wrapper correctly maps domain cards to library
+  > - Test hand comparison logic (ranking integer comparison)
+  > - Verify `GetHandCategory()` returns expected types for known hands
+  > - Verify `GetHandDescription()` returns readable descriptions
+  > - Test winner determination in multi-player scenarios
+  > - Edge cases: ties, split pots, wheel straight (A-2-3-4-5)
+  > - Note: Library handles hand ranking logic; tests focus on integration correctness
 
 - [ ] **Create pot calculation unit tests**
   Task ID: `core-gameplay-22`

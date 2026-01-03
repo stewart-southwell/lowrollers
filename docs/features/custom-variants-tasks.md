@@ -54,6 +54,12 @@
 
 ## Bomb Pots - Frontend
 
+> **DESIGN APPROVAL REQUIRED**: Before implementing any UI component below, either:
+> 1. Agent presents a generated mockup for user approval, OR
+> 2. User provides a screenshot/design reference to emulate
+>
+> Approved designs are stored in `docs/designs/` for implementation reference.
+
 - [ ] **Create bomb pot announcement component**
   Task ID: `variants-05`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/bomb-pot/bomb-pot-announcement/`
@@ -123,6 +129,8 @@
 
 ## Button Money - Frontend
 
+> **DESIGN APPROVAL REQUIRED** (see Bomb Pots - Frontend section above)
+
 - [ ] **Create kitty display component**
   Task ID: `variants-11`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/button-money/kitty-display/`
@@ -153,6 +161,8 @@
 ---
 
 ## Configuration UI
+
+> **DESIGN APPROVAL REQUIRED** (see Bomb Pots - Frontend section above)
 
 - [ ] **Create bomb pot settings component**
   Task ID: `variants-14`
