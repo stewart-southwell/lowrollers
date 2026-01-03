@@ -44,7 +44,7 @@
   > - Create shuffle verification method
   > - Unit tests proving uniform distribution (chi-square test)
 
-- [ ] **Create finite state machine for hand phases**
+- [x] **Create finite state machine for hand phases**
   Task ID: `core-gameplay-04`
   > **Implementation**: Create `src/LowRollers.Api/Domain/StateMachine/`
   > **Details**:

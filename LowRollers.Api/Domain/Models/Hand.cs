@@ -1,31 +1,6 @@
+using LowRollers.Api.Domain.StateMachine;
+
 namespace LowRollers.Api.Domain.Models;
-
-/// <summary>
-/// Represents the current phase of a poker hand.
-/// </summary>
-public enum HandPhase
-{
-    /// <summary>Waiting to start a new hand.</summary>
-    Waiting = 0,
-
-    /// <summary>Preflop betting round (before community cards).</summary>
-    Preflop = 1,
-
-    /// <summary>Flop betting round (3 community cards dealt).</summary>
-    Flop = 2,
-
-    /// <summary>Turn betting round (4th community card dealt).</summary>
-    Turn = 3,
-
-    /// <summary>River betting round (5th community card dealt).</summary>
-    River = 4,
-
-    /// <summary>Showdown - determining winner(s).</summary>
-    Showdown = 5,
-
-    /// <summary>Hand is complete.</summary>
-    Complete = 6
-}
 
 /// <summary>
 /// Represents a single poker hand from deal to showdown.
@@ -216,35 +191,5 @@ public sealed class Hand
         }
 
         return hand;
-    }
-
-    /// <summary>
-    /// Advances to the next phase of the hand.
-    /// </summary>
-    public void AdvancePhase()
-    {
-        Phase = Phase switch
-        {
-            HandPhase.Waiting => HandPhase.Preflop,
-            HandPhase.Preflop => HandPhase.Flop,
-            HandPhase.Flop => HandPhase.Turn,
-            HandPhase.Turn => HandPhase.River,
-            HandPhase.River => HandPhase.Showdown,
-            HandPhase.Showdown => HandPhase.Complete,
-            _ => throw new InvalidOperationException($"Cannot advance from phase {Phase}")
-        };
-
-        // Reset betting round state
-        CurrentBet = 0;
-        RaisesThisRound = 0;
-    }
-
-    /// <summary>
-    /// Marks the hand as complete.
-    /// </summary>
-    public void Complete()
-    {
-        Phase = HandPhase.Complete;
-        CompletedAt = DateTimeOffset.UtcNow;
     }
 }

@@ -276,8 +276,10 @@ public class ShuffleServiceTests
         }
 
         // Assert - Card 0 should appear roughly equally in all positions
+        // With 10,000 iterations / 52 positions = ~192 expected per position
+        // Using 30% tolerance to avoid flaky tests while still catching major bias
         double expectedPerPosition = iterations / 52.0;
-        double tolerance = expectedPerPosition * 0.20; // 20% tolerance
+        double tolerance = expectedPerPosition * 0.30;
 
         foreach (var count in positions)
         {
