@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low Rollers - Poker Table Mockup</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .header {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      color: #ffd700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      margin-bottom: 5px;
+    }
+
+    .header .subtitle {
+      color: #888;
+      font-size: 14px;
+    }
+
+    .table-container {
+      position: relative;
+      width: 900px;
+      height: 500px;
+    }
+
+    /* The poker table */
+    .poker-table {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px;
+      height: 350px;
+      background: linear-gradient(180deg, #1e5631 0%, #2d7a46 50%, #1e5631 100%);
+      border-radius: 175px;
+      border: 15px solid #8B4513;
+      box-shadow:
+        0 0 0 5px #654321,
+        0 0 0 10px #4a3219,
+        inset 0 0 50px rgba(0,0,0,0.3),
+        0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .table-felt {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 160px;
+    }
+
+    /* Community cards area */
+    .community-area {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -70%);
+      display: flex;
+      gap: 8px;
+    }
+
+    .card {
+      width: 55px;
+      height: 80px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .card.hearts, .card.diamonds { color: #e74c3c; }
+    .card.spades, .card.clubs { color: #2c3e50; }
+
+    .card .rank { font-size: 18px; }
+    .card .suit { font-size: 24px; }
+
+    .card.empty {
+      background: rgba(255,255,255,0.1);
+      border: 2px dashed rgba(255,255,255,0.3);
+    }
+
+    /* Pot display */
+    .pot-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, 30%);
+      text-align: center;
+    }
+
+    .pot-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .pot-amount {
+      font-size: 28px;
+      font-weight: bold;
+      color: #ffd700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    /* Player seats */
+    .player-seat {
+      position: absolute;
+      width: 120px;
+      text-align: center;
+    }
+
+    .seat-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      margin: 0 auto 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      border: 3px solid #2c3e50;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .seat-avatar.active {
+      border-color: #ffd700;
+      box-shadow: 0 0 15px rgba(255,215,0,0.5);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 15px rgba(255,215,0,0.5); }
+      50% { box-shadow: 0 0 25px rgba(255,215,0,0.8); }
+    }
+
+    .seat-avatar.empty-seat {
+      background: rgba(255,255,255,0.1);
+      border: 2px dashed rgba(255,255,255,0.3);
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .seat-avatar.empty-seat:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.5);
+    }
+
+    .seat-avatar.folded {
+      opacity: 0.4;
+    }
+
+    .seat-avatar.all-in {
+      border-color: #e74c3c;
+      box-shadow: 0 0 15px rgba(231,76,60,0.5);
+    }
+
+    .player-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-chips {
+      font-size: 12px;
+      color: #ffd700;
+      font-weight: 500;
+    }
+
+    .player-cards {
+      display: flex;
+      gap: 3px;
+      justify-content: center;
+      margin-top: 5px;
+    }
+
+    .hole-card {
+      width: 35px;
+      height: 50px;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+
+    .hole-card.face-down {
+      background: linear-gradient(135deg, #c0392b 0%, #922b21 100%);
+      border: 1px solid #7b241c;
+      background-image:
+        linear-gradient(135deg, #c0392b 0%, #922b21 100%),
+        repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px);
+    }
+
+    .hole-card.face-up {
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .hole-card.face-up.hearts, .hole-card.face-up.diamonds { color: #e74c3c; }
+    .hole-card.face-up.spades, .hole-card.face-up.clubs { color: #2c3e50; }
+
+    .player-bet {
+      position: absolute;
+      background: rgba(0,0,0,0.7);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: #ffd700;
+      white-space: nowrap;
+    }
+
+    .dealer-button {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #fff 0%, #ddd 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+      color: #333;
+      border: 2px solid #333;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* Action timer */
+    .action-timer {
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+    }
+
+    .timer-bar {
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .timer-fill {
+      height: 100%;
+      width: 70%;
+      background: linear-gradient(90deg, #e74c3c 0%, #f1c40f 50%, #27ae60 100%);
+      border-radius: 2px;
+      transition: width 1s linear;
+    }
+
+    .timer-text {
+      font-size: 10px;
+      color: #f1c40f;
+      margin-top: 2px;
+    }
+
+    /* Seat positions - oval arrangement */
+    .seat-1 { bottom: -40px; left: 50%; transform: translateX(-50%); }
+    .seat-2 { bottom: 0; left: 15%; }
+    .seat-3 { top: 50%; left: -5%; transform: translateY(-50%); }
+    .seat-4 { top: 10%; left: 10%; }
+    .seat-5 { top: -50px; left: 30%; }
+    .seat-6 { top: -50px; right: 30%; }
+    .seat-7 { top: 10%; right: 10%; }
+    .seat-8 { top: 50%; right: -5%; transform: translateY(-50%); }
+    .seat-9 { bottom: 0; right: 15%; }
+    .seat-10 { bottom: -40px; right: 25%; }
+
+    /* Action panel */
+    .action-panel {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      background: rgba(0,0,0,0.85);
+      padding: 15px 25px;
+      border-radius: 15px;
+      box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .action-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    .action-btn .hotkey {
+      font-size: 10px;
+      opacity: 0.7;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .btn-fold {
+      background: linear-gradient(135deg, #7f8c8d, #636e72);
+      color: #fff;
+    }
+
+    .btn-fold:hover {
+      background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    }
+
+    .btn-check {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: #fff;
+    }
+
+    .btn-call {
+      background: linear-gradient(135deg, #27ae60, #1e8449);
+      color: #fff;
+    }
+
+    .btn-call:hover {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+    }
+
+    .btn-raise {
+      background: linear-gradient(135deg, #f39c12, #d68910);
+      color: #fff;
+    }
+
+    .btn-raise:hover {
+      background: linear-gradient(135deg, #f1c40f, #f39c12);
+    }
+
+    .btn-allin {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: #fff;
+    }
+
+    .btn-allin:hover {
+      background: linear-gradient(135deg, #ec7063, #e74c3c);
+    }
+
+    .raise-slider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.1);
+      padding: 10px 15px;
+      border-radius: 8px;
+    }
+
+    .raise-input {
+      width: 80px;
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.9);
+      font-size: 14px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .slider {
+      width: 150px;
+      accent-color: #f39c12;
+      cursor: pointer;
+    }
+
+    .quick-amounts {
+      display: flex;
+      gap: 5px;
+    }
+
+    .quick-btn {
+      padding: 5px 10px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: transparent;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-btn:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.5);
+    }
+
+    /* Legend */
+    .legend {
+      position: absolute;
+      bottom: 120px;
+      right: 20px;
+      background: rgba(0,0,0,0.6);
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 12px;
+      backdrop-filter: blur(5px);
+    }
+
+    .legend h4 {
+      color: #ffd700;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .legend-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    /* Side pot indicator */
+    .side-pots {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, 80%);
+      display: flex;
+      gap: 10px;
+    }
+
+    .side-pot {
+      background: rgba(0,0,0,0.5);
+      padding: 4px 12px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .side-pot .label {
+      color: rgba(255,255,255,0.6);
+      margin-right: 5px;
+    }
+
+    .side-pot .amount {
+      color: #ffd700;
+    }
+
+    /* Game info */
+    .game-info {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.6);
+      padding: 12px 15px;
+      border-radius: 10px;
+      font-size: 12px;
+      backdrop-filter: blur(5px);
+    }
+
+    .game-info .blinds {
+      color: #ffd700;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .game-info .hand-num {
+      color: rgba(255,255,255,0.6);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>LOW ROLLERS</h1>
+    <div class="subtitle">Poker Table Mockup - Design Review</div>
+  </div>
+
+  <!-- Game Info -->
+  <div class="game-info">
+    <div class="blinds">Blinds: $25 / $50</div>
+    <div class="hand-num">Hand #127</div>
+  </div>
+
+  <div class="table-container">
+    <div class="poker-table">
+      <div class="table-felt"></div>
+
+      <!-- Community Cards -->
+      <div class="community-area">
+        <div class="card hearts">
+          <span class="rank">A</span>
+          <span class="suit">&#9829;</span>
+        </div>
+        <div class="card spades">
+          <span class="rank">K</span>
+          <span class="suit">&#9824;</span>
+        </div>
+        <div class="card diamonds">
+          <span class="rank">7</span>
+          <span class="suit">&#9830;</span>
+        </div>
+        <div class="card clubs">
+          <span class="rank">2</span>
+          <span class="suit">&#9827;</span>
+        </div>
+        <div class="card empty"></div>
+      </div>
+
+      <!-- Pot Display -->
+      <div class="pot-display">
+        <div class="pot-label">Main Pot</div>
+        <div class="pot-amount">$1,250</div>
+      </div>
+
+      <!-- Side Pots -->
+      <div class="side-pots">
+        <div class="side-pot">
+          <span class="label">Side Pot:</span>
+          <span class="amount">$340</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player Seats -->
+
+    <!-- Seat 1 - Bottom center (Current player - YOUR seat) -->
+    <div class="player-seat seat-1">
+      <div class="seat-avatar active">&#128100;</div>
+      <div class="player-name">You</div>
+      <div class="player-chips">$2,450</div>
+      <div class="player-cards">
+        <div class="hole-card face-up hearts"><span>A</span><span>&#9829;</span></div>
+        <div class="hole-card face-up spades"><span>K</span><span>&#9824;</span></div>
+      </div>
+      <div class="action-timer">
+        <div class="timer-bar"><div class="timer-fill"></div></div>
+        <div class="timer-text">21s</div>
+      </div>
+      <div class="player-bet" style="top: -35px; left: 50%; transform: translateX(-50%);">$150</div>
+    </div>
+
+    <!-- Seat 2 -->
+    <div class="player-seat seat-2">
+      <div class="seat-avatar">&#127917;</div>
+      <div class="player-name">Mike_TheShark</div>
+      <div class="player-chips">$3,100</div>
+      <div class="player-cards">
+        <div class="hole-card face-down"></div>
+        <div class="hole-card face-down"></div>
+      </div>
+      <div class="player-bet" style="top: -10px; right: -40px;">$150</div>
+    </div>
+
+    <!-- Seat 3 - Folded -->
+    <div class="player-seat seat-3">
+      <div class="seat-avatar folded">&#127183;</div>
+      <div class="player-name" style="opacity:0.5">CardNinja</div>
+      <div class="player-chips" style="opacity:0.5">$890</div>
+    </div>
+
+    <!-- Seat 4 - Dealer -->
+    <div class="player-seat seat-4">
+      <div class="seat-avatar">&#127920;</div>
+      <div class="player-name">LuckyDraw</div>
+      <div class="player-chips">$1,780</div>
+      <div class="player-cards">
+        <div class="hole-card face-down"></div>
+        <div class="hole-card face-down"></div>
+      </div>
+      <div class="dealer-button" style="bottom: 55px; right: -15px;">D</div>
+    </div>
+
+    <!-- Seat 5 - Empty -->
+    <div class="player-seat seat-5">
+      <div class="seat-avatar empty-seat">+</div>
+      <div class="player-name" style="color: rgba(255,255,255,0.4)">Empty Seat</div>
+    </div>
+
+    <!-- Seat 6 -->
+    <div class="player-seat seat-6">
+      <div class="seat-avatar">&#127914;</div>
+      <div class="player-name">PokerPro99</div>
+      <div class="player-chips">$4,200</div>
+      <div class="player-cards">
+        <div class="hole-card face-down"></div>
+        <div class="hole-card face-down"></div>
+      </div>
+      <div class="player-bet" style="bottom: -5px; left: 50%; transform: translateX(-50%);">$300</div>
+    </div>
+
+    <!-- Seat 7 - Folded -->
+    <div class="player-seat seat-7">
+      <div class="seat-avatar folded">&#127922;</div>
+      <div class="player-name" style="opacity:0.5">DiceRoller</div>
+      <div class="player-chips" style="opacity:0.5">$560</div>
+    </div>
+
+    <!-- Seat 8 -->
+    <div class="player-seat seat-8">
+      <div class="seat-avatar">&#127942;</div>
+      <div class="player-name">ChampionChips</div>
+      <div class="player-chips">$2,890</div>
+      <div class="player-cards">
+        <div class="hole-card face-down"></div>
+        <div class="hole-card face-down"></div>
+      </div>
+    </div>
+
+    <!-- Seat 9 - All In -->
+    <div class="player-seat seat-9">
+      <div class="seat-avatar all-in">&#127775;</div>
+      <div class="player-name">AllStarAce</div>
+      <div class="player-chips" style="color: #e74c3c;">ALL IN</div>
+      <div class="player-cards">
+        <div class="hole-card face-down"></div>
+        <div class="hole-card face-down"></div>
+      </div>
+      <div class="player-bet" style="top: -10px; left: -40px;">$1,450</div>
+    </div>
+
+    <!-- Seat 10 - Empty -->
+    <div class="player-seat seat-10">
+      <div class="seat-avatar empty-seat">+</div>
+      <div class="player-name" style="color: rgba(255,255,255,0.4)">Empty Seat</div>
+    </div>
+  </div>
+
+  <!-- Action Panel -->
+  <div class="action-panel">
+    <button class="action-btn btn-fold">
+      Fold
+      <span class="hotkey">[F]</span>
+    </button>
+    <button class="action-btn btn-call">
+      Call $150
+      <span class="hotkey">[C]</span>
+    </button>
+    <div class="raise-slider">
+      <button class="action-btn btn-raise">
+        Raise
+        <span class="hotkey">[R]</span>
+      </button>
+      <input type="range" class="slider" min="300" max="2450" value="450">
+      <input type="text" class="raise-input" value="$450">
+      <div class="quick-amounts">
+        <button class="quick-btn">Min</button>
+        <button class="quick-btn">1/2 Pot</button>
+        <button class="quick-btn">Pot</button>
+      </div>
+    </div>
+    <button class="action-btn btn-allin">
+      All-In
+      <span class="hotkey">[A]</span>
+    </button>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <h4>Status Legend</h4>
+    <div class="legend-item">
+      <div class="legend-icon" style="border: 3px solid #ffd700; background: linear-gradient(135deg, #3498db, #2980b9);">&#128100;</div>
+      <span>Active Turn</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-icon" style="border: 3px solid #e74c3c; background: linear-gradient(135deg, #3498db, #2980b9);">&#127775;</div>
+      <span>All-In</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-icon" style="opacity: 0.4; background: linear-gradient(135deg, #3498db, #2980b9);">&#127183;</div>
+      <span>Folded</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-icon" style="border: 2px dashed rgba(255,255,255,0.3); background: transparent; color: rgba(255,255,255,0.5);">+</div>
+      <span>Empty Seat</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-icon" style="background: #fff; color: #333; font-size: 8px; font-weight: bold;">D</div>
+      <span>Dealer Button</span>
+    </div>
+  </div>
+</body>
+</html>

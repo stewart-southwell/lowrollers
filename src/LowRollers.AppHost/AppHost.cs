@@ -13,4 +13,13 @@ var api = builder.AddProject<Projects.LowRollers_Api>("api")
     .WithReference(postgres)
     .WithExternalHttpEndpoints();
 
+// Add the Angular frontend
+var web = builder.AddJavaScriptApp("web", "../LowRollers.Web")
+    .WithNpm(install: true)
+    .WithRunScript("start")
+    .WithReference(api)
+    .WaitFor(api)
+    .WithHttpEndpoint(port: 4200, env: "PORT")
+    .WithExternalHttpEndpoints();
+
 builder.Build().Run();

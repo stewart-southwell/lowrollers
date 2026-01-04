@@ -168,94 +168,118 @@
 
 ## Angular Components
 
-> **DESIGN APPROVAL REQUIRED**: Before implementing any UI component below, either:
-> 1. Agent presents a generated mockup for user approval, OR
-> 2. User provides a screenshot/design reference to emulate
->
-> Approved designs are stored in `docs/designs/` for implementation reference.
+> **DESIGN REFERENCE**: Use `docs/designs/poker-table-mockup-v2.html` as the approved design reference for all UI components below. This mockup contains the complete styling, layout, and SVG assets (card backs, casino chips) to be used during implementation.
 
-- [ ] **Create poker table component**
+- [x] **Create poker table component**
   Task ID: `core-gameplay-13`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/poker-table/`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.poker-table`, `.table-rail`, `.table-felt`, `.table-area`
   > **Details**:
   > - `poker-table.component.ts` - Main table layout
-  > - Position 10 player seats in oval arrangement
-  > - Center area for community cards and pot
-  > - Responsive layout for different screen sizes
+  > - Dark navy rail with green felt interior (racetrack/oval shape with ~42% border-radius)
+  > - Position player seats around table edge (see seat positioning classes)
+  > - Center area for community cards and pot display
+  > - Diagonal pattern background (`.diagonal-pattern`)
+  > - Responsive layout with scaling for different screen sizes
+  > - Include dealer button component
   > - Use PrimeNG components where appropriate
 
 - [ ] **Create player seat component**
   Task ID: `core-gameplay-14`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/player-seat/`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.player-seat`, `.player-container`, `.avatar-wrapper`, `.player-info`
   > **Details**:
   > - `player-seat.component.ts`
-  > - Display: name, chip count, cards (face-up/down), current bet
-  > - Status indicators: active turn, folded, all-in, away
-  > - Dealer button indicator
-  > - Highlight when it's player's turn
-  > - Use PrimeNG Chip, Badge components
+  > - Horizontal layout: avatar with info card beside it (direction varies by seat position)
+  > - Avatar with emoji placeholder, status badges (mic/video icons)
+  > - Hole cards below avatar using SVG card back pattern (`#cardBack`)
+  > - Player info card: name, chip count (green text)
+  > - Active player: orange border glow, pulsating indicator, action timer bar
+  > - Folded state: greyed out avatar/cards, "Folded" label
+  > - Bet display: chip stack graphics + amount badge, positioned toward table center
+  > - Empty seat: dashed border, "Open Seat" text, hover state
 
 - [ ] **Create community cards component**
   Task ID: `core-gameplay-15`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/community-cards/`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.community-cards`, `.card`
   > **Details**:
-  > - Display 5 card positions (blank until dealt)
-  > - Cards appear as dealt (3, then 1, then 1)
+  > - Display 5 card positions in horizontal row
+  > - Card design: white background, rank/suit in corners, large center suit
+  > - Red color for hearts/diamonds, black for spades/clubs
+  > - Cards appear as dealt (3 flop, 1 turn, 1 river)
   > - Card flip animation on deal
   > - Highlight winning cards at showdown
 
 - [ ] **Create pot display component**
   Task ID: `core-gameplay-16`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/pot-display/`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.pot-display`, `.pot-chips`, `.pot-info`, `.chip-stack`
   > **Details**:
-  > - Main pot prominently displayed
+  > - Chip stack graphics using SVG symbols (`#chipRed`, `#chipBlue`, `#chipGreen`, `#chipBlack`)
+  > - Stacked chip columns with overlapping effect
+  > - Pot info card: "Main Pot" label + yellow amount
   > - Side pots listed separately with eligible player count
-  > - Animate pot changes
-  > - Use PrimeNG styling
+  > - Animate chip additions on pot changes
 
 - [ ] **Create action panel component**
   Task ID: `core-gameplay-17`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/action-panel/`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.action-panel`, `.action-btn`, `.btn-fold`, `.btn-call`, `.btn-raise`, `.btn-allin`
   > **Details**:
   > - `action-panel.component.ts`
+  > - Fixed bottom bar with dark background
+  > - Left section: player avatar, chip count, turn timer
+  > - Center section: raise slider control
+  > - Right section: action buttons (Fold/Call/Raise/All-In)
   > - Contextual buttons:
   >   - Fold (always when active)
   >   - Check (when no bet facing)
   >   - Call $X (when bet facing)
   >   - Raise (opens amount input)
   >   - All-In (with confirmation)
+  > - Button colors: red=fold, green=call, blue=raise, orange=all-in
+  > - Hotkey hints shown on buttons `[F]`, `[C]`, `[R]`, `[A]`
+  > - Quick bet buttons row above: 2BB, 3BB, 1/2 Pot, POT, MAX, settings
   > - Use PrimeNG Button, ConfirmDialog
   > - Disable when not player's turn
 
 - [ ] **Create raise slider component**
   Task ID: `core-gameplay-18`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/action-panel/raise-slider/`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.raise-control`, `.raise-slider`, `.raise-input`
   > **Details**:
+  > - Dark container with "Raise to:" label
   > - Slider from min raise to max (all-in)
-  > - Quick buttons: Min, 1/2 Pot, Pot, All-In
+  > - Blue slider thumb with shadow
   > - Number input for exact amount
+  > - Quick bet buttons: 2BB, 3BB, 1/2 Pot, POT, MAX
   > - Use PrimeNG Slider, InputNumber
 
 - [ ] **Create action timer component**
   Task ID: `core-gameplay-19`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/action-timer/`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.action-timer-bar`, `.timer-bar-progress`, `.timer-text`
   > **Details**:
-  > - Countdown display (seconds remaining)
-  > - Progress bar depleting
-  > - Color change at warning threshold (10s)
+  > - Timer bar on active player's avatar (not separate component)
+  > - Progress bar depletes over 30 seconds
+  > - Color transitions: green → yellow → orange → red
+  > - Digital time display below bar (e.g., "0:18")
   > - Time bank indicator if available
+  > - Also show timer in action panel left section
   > - Use PrimeNG ProgressBar
 
 - [ ] **Implement keyboard hotkeys**
   Task ID: `core-gameplay-20`
   > **Implementation**: Add to `src/LowRollers.Web/src/app/features/game/action-panel/`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.hotkey` class on buttons
   > **Details**:
   > - F = Fold
   > - C = Call/Check (contextual)
   > - R = Raise (focus raise input)
   > - A = All-In (with confirmation)
   > - Only active when player's turn
-  > - Display hotkey hints on buttons
+  > - Hotkey hints displayed in brackets on each button
 
 ---
 

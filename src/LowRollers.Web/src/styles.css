@@ -1,0 +1,219 @@
+/* Global Styles - Low Rollers Poker */
+
+/* Note: Inter font is loaded via preconnect/link in index.html for better performance */
+
+/* CSS Variables for theming */
+:root {
+  /* Background colors */
+  --bg-primary: #1a1d26;
+  --bg-secondary: #12151c;
+  --bg-card: rgba(0, 0, 0, 0.6);
+  --bg-glass: rgba(0, 0, 0, 0.8);
+
+  /* Table colors */
+  --table-rail-light: #374151;
+  --table-rail-mid: #1f2937;
+  --table-rail-dark: #111827;
+  --table-felt-light: #166534;
+  --table-felt-mid: #14532d;
+  --table-felt-dark: #0f3d26;
+
+  /* Text colors */
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: rgba(255, 255, 255, 0.5);
+
+  /* Accent colors */
+  --accent-green: #10b981;
+  --accent-green-light: #34d399;
+  --accent-orange: #f97316;
+  --accent-yellow: #facc15;
+  --accent-red: #ef4444;
+  --accent-blue: #3b82f6;
+
+  /* Button gradients */
+  --btn-fold-start: #ef4444;
+  --btn-fold-end: #dc2626;
+  --btn-call-start: #22c55e;
+  --btn-call-end: #16a34a;
+  --btn-raise-start: #3b82f6;
+  --btn-raise-end: #2563eb;
+  --btn-allin-start: #f59e0b;
+  --btn-allin-end: #d97706;
+
+  /* Chip colors */
+  --chip-white: #f3f4f6;
+  --chip-red: #dc2626;
+  --chip-blue: #2563eb;
+  --chip-green: #22c55e;
+  --chip-black: #374151;
+
+  /* Border colors */
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-active: rgba(249, 115, 22, 0.6);
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 50%;
+
+  /* Animation timing */
+  --animation-fast: 150ms;
+  --animation-normal: 300ms;
+  --animation-slow: 500ms;
+  --animation-very-slow: 1000ms;
+
+  /* Easing functions */
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* Card dimensions (1.4:1 aspect ratio like real cards) */
+  --card-width: 70px;
+  --card-height: 98px;
+  --card-radius: 6px;
+  --card-mini-width: 32px;
+  --card-mini-height: 46px;
+  --card-large-width: 96px;
+  --card-large-height: 128px;
+
+  /* Z-index scale */
+  --z-background: 0;
+  --z-table: 1;
+  --z-cards: 10;
+  --z-chips: 20;
+  --z-pot: 30;
+  --z-player: 35;
+  --z-player-active: 40;
+  --z-dealer-button: 45;
+  --z-actions: 50;
+  --z-header: 55;
+  --z-chat: 60;
+  --z-video: 70;
+  --z-dropdown: 80;
+  --z-modal: 100;
+  --z-toast: 110;
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Base styles */
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background: var(--bg-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Diagonal pattern background */
+.diagonal-pattern {
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 20px,
+    rgba(255, 255, 255, 0.03) 20px,
+    rgba(255, 255, 255, 0.03) 40px
+  );
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Utility classes */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Keyframe animations */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes timerBarCountdown {
+  0% {
+    width: 100%;
+    background: #22c55e;
+  }
+  50% {
+    background: #22c55e;
+  }
+  65% {
+    background: #eab308;
+  }
+  80% {
+    background: #f97316;
+  }
+  90% {
+    background: #ef4444;
+  }
+  100% {
+    width: 0%;
+    background: #ef4444;
+  }
+}
+
+@keyframes timerTextColor {
+  0%,
+  50% {
+    color: #22c55e;
+  }
+  65% {
+    color: #eab308;
+  }
+  80% {
+    color: #f97316;
+  }
+  90%,
+  100% {
+    color: #ef4444;
+  }
+}
