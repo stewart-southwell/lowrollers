@@ -97,7 +97,7 @@
 
 ## Game Orchestration
 
-- [ ] **Implement game flow orchestration**
+- [x] **Implement game flow orchestration**
   Task ID: `core-gameplay-08`
   > **Implementation**: Create `src/LowRollers.Api/Features/GameEngine/GameOrchestrator.cs`
   > **Details**:

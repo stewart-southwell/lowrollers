@@ -1,3 +1,10 @@
+using LowRollers.Api.Domain.Events;
+using LowRollers.Api.Domain.Pots;
+using LowRollers.Api.Domain.Services;
+using LowRollers.Api.Domain.StateMachine;
+using LowRollers.Api.Domain.StateMachine.Handlers;
+using LowRollers.Api.Features.GameEngine;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults (Aspire)
@@ -5,6 +12,24 @@ builder.AddServiceDefaults();
 
 // Add SignalR for real-time communication
 builder.Services.AddSignalR();
+
+// Register domain services
+builder.Services.AddSingleton<IShuffleService, ShuffleService>();
+builder.Services.AddSingleton<IPotManager, PotManager>();
+builder.Services.AddSingleton<IHandEventStore, InMemoryHandEventStore>();
+
+// Register phase handlers for state machine
+builder.Services.AddSingleton<IHandPhaseHandler, WaitingPhaseHandler>();
+builder.Services.AddSingleton<IHandPhaseHandler, PreflopPhaseHandler>();
+builder.Services.AddSingleton<IHandPhaseHandler, FlopPhaseHandler>();
+builder.Services.AddSingleton<IHandPhaseHandler, TurnPhaseHandler>();
+builder.Services.AddSingleton<IHandPhaseHandler, RiverPhaseHandler>();
+builder.Services.AddSingleton<IHandPhaseHandler, ShowdownPhaseHandler>();
+builder.Services.AddSingleton<IHandPhaseHandler, CompletePhaseHandler>();
+builder.Services.AddSingleton<HandStateMachine>();
+
+// Register game orchestrator
+builder.Services.AddSingleton<IGameOrchestrator, GameOrchestrator>();
 
 // Add OpenAPI
 builder.Services.AddOpenApi();
