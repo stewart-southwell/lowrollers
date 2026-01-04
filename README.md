@@ -2,6 +2,8 @@
 
 Private online poker platform for friend groups with integrated video chat and custom game variants.
 
+![Game Design Mock](docs/designs/game_design_mock.png)
+
 ## Overview
 
 Low Rollers enables 4-10 friends to play Texas Hold'em online with:
@@ -10,28 +12,178 @@ Low Rollers enables 4-10 friends to play Texas Hold'em online with:
 - **Custom variants** - Double board bomb pots and button money
 - **Real-time sync** - <100ms action latency with graceful reconnection
 
-## Project Structure
+## Architecture
 
-```
-lowrollers/
-├── docs/              # Project documentation
-├── specs/             # Feature specifications (BRD, PRD)
-├── src/               # Source code
-├── tests/             # Test files
-├── .clavix/           # Clavix workflow outputs
-└── README.md          # This file
+```mermaid
+flowchart TB
+    subgraph Client["Angular 21 Frontend"]
+        UI[Poker Table UI]
+        Signals[Angular Signals]
+        SignalRClient[SignalR Client]
+    end
+
+    subgraph Backend[".NET 10 Backend"]
+        subgraph API["LowRollers.Api"]
+            GameHub[GameHub<br/>SignalR Hub]
+            Orchestrator[Game Orchestrator]
+            Timer[Action Timer Service]
+            Broadcaster[Game State Broadcaster]
+        end
+
+        subgraph Domain["Domain Layer"]
+            StateMachine[Hand State Machine]
+            Betting[Betting Logic]
+            Pots[Pot Manager]
+            Showdown[Showdown Handler]
+            Events[Event Store]
+        end
+
+        subgraph Services["Services"]
+            Shuffle[Shuffle Service]
+            Evaluator[Hand Evaluator]
+        end
+    end
+
+    subgraph Infrastructure["Infrastructure"]
+        Redis[(Redis<br/>Session/State)]
+        Postgres[(PostgreSQL<br/>Persistence)]
+        LiveKit[LiveKit<br/>Video SFU]
+    end
+
+    UI --> Signals
+    Signals --> SignalRClient
+    SignalRClient <-->|WebSocket| GameHub
+    GameHub --> Orchestrator
+    Orchestrator --> StateMachine
+    Orchestrator --> Timer
+    Orchestrator --> Broadcaster
+    StateMachine --> Betting
+    Betting --> Pots
+    StateMachine --> Showdown
+    Showdown --> Evaluator
+    Orchestrator --> Events
+    Orchestrator --> Shuffle
+    Broadcaster --> GameHub
+    API --> Redis
+    API --> Postgres
+    Client <-->|WebRTC| LiveKit
 ```
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | Angular 21, Signals |
-| Backend | .NET 10.0 / ASP.NET Core |
-| Real-time | SignalR (WebSockets) |
-| Video | LiveKit (self-hosted WebRTC SFU) |
-| Database | Azure PostgreSQL, Redis |
-| Hosting | Azure Container Apps, .NET Aspire |
+| Layer | Technology | Notes |
+|-------|------------|-------|
+| Frontend | Angular 21 | Signals for state management |
+| Backend | .NET 10.0 / ASP.NET Core | Clean architecture |
+| Real-time | SignalR | WebSocket-based, <100ms latency |
+| Video | LiveKit | Self-hosted WebRTC SFU |
+| Database | Azure PostgreSQL | Primary data store |
+| Cache | Redis | Session and real-time state |
+| Hosting | Azure Container Apps | .NET Aspire orchestration |
+
+## Project Structure
+
+```
+lowrollers/
+├── src/
+│   ├── LowRollers.Api/           # .NET API backend
+│   │   ├── Domain/               # Core domain models & logic
+│   │   │   ├── Betting/          # Action validation, betting rounds
+│   │   │   ├── Evaluation/       # Hand evaluation service
+│   │   │   ├── Events/           # Event sourcing for hand history
+│   │   │   ├── Models/           # Card, Deck, Hand, Player, Table, Pot
+│   │   │   ├── Pots/             # Pot management & side pots
+│   │   │   ├── Services/         # Cryptographic shuffle
+│   │   │   └── StateMachine/     # Hand phase FSM with handlers
+│   │   └── Features/
+│   │       └── GameEngine/       # SignalR hub, orchestration, timers
+│   ├── LowRollers.Web/           # Angular 21 frontend
+│   │   └── src/app/
+│   │       ├── features/game/    # Poker table component
+│   │       └── shared/           # Card component, SVG definitions
+│   ├── LowRollers.AppHost/       # .NET Aspire orchestration
+│   └── LowRollers.ServiceDefaults/
+├── tests/
+│   └── LowRollers.Api.Tests/     # xUnit tests
+├── docs/
+│   ├── designs/                  # UI mockups
+│   └── features/                 # Feature task tracking
+├── specs/
+│   └── poker_brd_v1.1.md         # Business Requirements Document
+└── .clavix/                      # Clavix workflow outputs
+```
+
+## Implementation Status
+
+### Phase 1: MVP (In Progress)
+
+| Feature | Status |
+|---------|--------|
+| Core domain models | Done |
+| Cryptographic shuffle (Fisher-Yates) | Done |
+| Hand evaluation (HoldemPoker.Evaluator) | Done |
+| Hand phase state machine | Done |
+| Betting logic & action validation | Done |
+| Pot management & side pots | Done |
+| Event sourcing for hand history | Done |
+| Game orchestrator | Done |
+| Showdown handler | Done |
+| Action timer system | Done |
+| SignalR GameHub | Done |
+| Game state broadcasting | Done |
+| Per-player state sanitization | Done |
+| Angular poker table component | Done |
+| Guest access & table joining | Pending |
+| Reconnection handling | Pending |
+
+### Phase 2-4: Future
+- Multi-party video chat (LiveKit)
+- Bomb pots & button money
+- Host configuration
+- Multi-table support
+- Spectator mode
+
+## Getting Started
+
+### Prerequisites
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [Node.js 20+](https://nodejs.org/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for Redis/PostgreSQL)
+
+### Development
+
+```bash
+# Clone the repository
+git clone https://github.com/stewart-southwell/lowrollers.git
+cd lowrollers
+
+# Start the backend with Aspire
+cd src/LowRollers.AppHost
+dotnet run
+
+# In another terminal, start the Angular frontend
+cd src/LowRollers.Web
+npm install
+npm start
+```
+
+### Running Tests
+
+```bash
+# Run all backend tests
+dotnet test
+
+# Run frontend tests
+cd src/LowRollers.Web
+npm test
+```
+
+## Documentation
+
+- **BRD:** `specs/poker_brd_v1.1.md` - Business Requirements (1096 lines, 100+ requirements)
+- **PRD:** `.clavix/outputs/lowrollers/full-prd.md` - Product Requirements
+- **Quick PRD:** `.clavix/outputs/lowrollers/quick-prd.md` - AI-optimized summary
+- **Tasks:** `docs/features/*-tasks.md` - Feature task tracking
 
 ## Development Phases
 
@@ -39,16 +191,6 @@ lowrollers/
 2. **Phase 2: Video** - Multi-party video chat integration
 3. **Phase 3: Customization** - Bomb pots, button money, host config
 4. **Phase 4: Polish** - Multi-table, spectator mode, optional accounts
-
-## Documentation
-
-- **BRD:** `specs/poker_brd_v1.1.md` - Business Requirements (1096 lines, 100+ requirements)
-- **PRD:** `.clavix/outputs/lowrollers/full-prd.md` - Product Requirements
-- **Quick PRD:** `.clavix/outputs/lowrollers/quick-prd.md` - AI-optimized summary
-
-## Getting Started
-
-*Coming soon - project scaffolding in progress*
 
 ## License
 
