@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\LowRollers.Api\LowRollers.Api.csproj" />
+    <ProjectReference Include="..\..\src\LowRollers.Api\LowRollers.Api.csproj" />
   </ItemGroup>
 
 </Project>

@@ -78,7 +78,7 @@
   >   - Track eligible players per pot
   > - Unit tests for complex scenarios (3+ all-ins at different amounts)
 
-- [ ] **Create event sourcing for hand history**
+- [x] **Create event sourcing for hand history**
   Task ID: `core-gameplay-07`
   > **Implementation**: Create `src/LowRollers.Api/Domain/Events/`
   > **Details**:
