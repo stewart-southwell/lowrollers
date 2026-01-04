@@ -228,14 +228,25 @@ public sealed class GameOrchestrator : IGameOrchestrator
     }
 
     /// <inheritdoc/>
-    public async Task<ActionResult> ForceTimeoutFoldAsync(Table table, CancellationToken ct = default)
+    public async Task<ActionResult> ForceTimeoutFoldAsync(Table table, int timeBankConsumed = 0, CancellationToken ct = default)
     {
         var hand = table.CurrentHand;
         if (hand?.CurrentPlayerId == null)
             return ActionResult.Failure("No player to fold.");
 
-        _logger.LogInformation("Forcing timeout fold for player {PlayerId}", hand.CurrentPlayerId);
-        return await ExecutePlayerActionAsync(table, hand.CurrentPlayerId.Value, PlayerActionType.Fold, ct: ct);
+        var playerId = hand.CurrentPlayerId.Value;
+
+        // Deduct time bank if consumed
+        if (timeBankConsumed > 0 && table.Players.TryGetValue(playerId, out var player))
+        {
+            player.TimeBankSeconds = Math.Max(0, player.TimeBankSeconds - timeBankConsumed);
+            _logger.LogDebug(
+                "Deducted {TimeBankConsumed}s from player {PlayerId} time bank. Remaining: {Remaining}s",
+                timeBankConsumed, playerId, player.TimeBankSeconds);
+        }
+
+        _logger.LogInformation("Forcing timeout fold for player {PlayerId}", playerId);
+        return await ExecutePlayerActionAsync(table, playerId, PlayerActionType.Fold, ct: ct);
     }
 
     /// <inheritdoc/>

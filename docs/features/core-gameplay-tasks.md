@@ -125,7 +125,7 @@
   > - Calculate winners per pot
   > - Distribute pots correctly
 
-- [ ] **Implement action timer system**
+- [x] **Implement action timer system**
   Task ID: `core-gameplay-10`
   > **Implementation**: Create `src/LowRollers.Api/Features/GameEngine/ActionTimer/ActionTimerService.cs`
   > **Details**:

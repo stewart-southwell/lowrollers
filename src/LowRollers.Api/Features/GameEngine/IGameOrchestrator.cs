@@ -177,9 +177,10 @@ public interface IGameOrchestrator
     /// Forces the current player to fold (used by timer expiry).
     /// </summary>
     /// <param name="table">The table.</param>
+    /// <param name="timeBankConsumed">Seconds of time bank consumed (0 if not used). Player's time bank will be reduced.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Result of the forced fold action.</returns>
-    Task<ActionResult> ForceTimeoutFoldAsync(Table table, CancellationToken ct = default);
+    Task<ActionResult> ForceTimeoutFoldAsync(Table table, int timeBankConsumed = 0, CancellationToken ct = default);
 
     /// <summary>
     /// Gets the current betting round state for a hand.

@@ -4,6 +4,7 @@ using LowRollers.Api.Domain.Services;
 using LowRollers.Api.Domain.StateMachine;
 using LowRollers.Api.Domain.StateMachine.Handlers;
 using LowRollers.Api.Features.GameEngine;
+using LowRollers.Api.Features.GameEngine.ActionTimer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,17 @@ builder.Services.AddSingleton<HandStateMachine>();
 
 // Register game orchestrator
 builder.Services.AddSingleton<IGameOrchestrator, GameOrchestrator>();
+
+// TODO: Register ActionTimerService when dependencies are available (core-gameplay-11/12)
+// Requires:
+//   - IActionTimerBroadcaster implementation (SignalR adapter)
+//   - Table provider function (from table management service)
+// builder.Services.AddSingleton<IActionTimerService>(sp =>
+//     new ActionTimerService(
+//         sp.GetRequiredService<IActionTimerBroadcaster>(),
+//         sp.GetRequiredService<IGameOrchestrator>(),
+//         tableId => tableManager.GetTable(tableId),
+//         sp.GetRequiredService<ILogger<ActionTimerService>>()));
 
 // Add OpenAPI
 builder.Services.AddOpenApi();
