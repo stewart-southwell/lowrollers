@@ -152,7 +152,7 @@
   > - `AllIn()` - Execute all-in, broadcast
   > - All methods: validate it's player's turn, log action
 
-- [ ] **Implement game state broadcasting**
+- [x] **Implement game state broadcasting**
   Task ID: `core-gameplay-12`
   > **Implementation**: Extend `src/LowRollers.Api/Hubs/GameHub.cs`
   > **Details**:

@@ -1,6 +1,8 @@
 using LowRollers.Api.Domain.Betting;
 using LowRollers.Api.Domain.Models;
 using LowRollers.Api.Features.GameEngine.ActionTimer;
+using LowRollers.Api.Features.GameEngine.Broadcasting;
+using LowRollers.Api.Features.GameEngine.Connections;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
@@ -14,22 +16,23 @@ public sealed class GameHub : Hub
 {
     private readonly IGameOrchestrator _gameOrchestrator;
     private readonly IActionTimerService _actionTimerService;
+    private readonly IGameStateBroadcaster _stateBroadcaster;
+    private readonly IConnectionManager _connectionManager;
     private readonly Func<Guid, Table?> _tableProvider;
     private readonly ILogger<GameHub> _logger;
-
-    // In-memory mapping of connection to player/table
-    // TODO: Replace with distributed cache (Redis) for multi-instance deployment
-    private static readonly Dictionary<string, PlayerConnection> _connections = new();
-    private static readonly object _connectionsLock = new();
 
     public GameHub(
         IGameOrchestrator gameOrchestrator,
         IActionTimerService actionTimerService,
+        IGameStateBroadcaster stateBroadcaster,
+        IConnectionManager connectionManager,
         Func<Guid, Table?> tableProvider,
         ILogger<GameHub> logger)
     {
         _gameOrchestrator = gameOrchestrator ?? throw new ArgumentNullException(nameof(gameOrchestrator));
         _actionTimerService = actionTimerService ?? throw new ArgumentNullException(nameof(actionTimerService));
+        _stateBroadcaster = stateBroadcaster ?? throw new ArgumentNullException(nameof(stateBroadcaster));
+        _connectionManager = connectionManager ?? throw new ArgumentNullException(nameof(connectionManager));
         _tableProvider = tableProvider ?? throw new ArgumentNullException(nameof(tableProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -45,25 +48,54 @@ public sealed class GameHub : Hub
         var groupName = GameHubConstants.GetTableGroupName(tableId);
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
 
-        lock (_connectionsLock)
-        {
-            _connections[Context.ConnectionId] = new PlayerConnection(tableId, playerId);
-        }
+        _connectionManager.AddPlayerConnection(Context.ConnectionId, tableId, playerId);
 
         _logger.LogInformation(
             "Player {PlayerId} joined table {TableId} (Connection: {ConnectionId})",
             playerId, tableId, Context.ConnectionId);
 
         await Clients.Group(groupName).SendAsync("PlayerJoined", playerId);
+
+        // Send current game state to the joining player
+        var table = _tableProvider(tableId);
+        if (table != null)
+        {
+            await _stateBroadcaster.SendGameStateToPlayerAsync(table, playerId);
+        }
     }
 
     /// <summary>
-    /// Removes a player from a table's SignalR group.
-    /// Called when a player leaves a table.
+    /// Joins a spectator to a table's SignalR group.
+    /// Spectators can watch the game but not participate.
+    /// </summary>
+    public async Task JoinAsSpectatorAsync(Guid tableId)
+    {
+        var groupName = GameHubConstants.GetTableGroupName(tableId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+
+        _connectionManager.AddSpectatorConnection(Context.ConnectionId, tableId);
+
+        _logger.LogInformation(
+            "Spectator joined table {TableId} (Connection: {ConnectionId})",
+            tableId, Context.ConnectionId);
+
+        await Clients.Group(groupName).SendAsync("SpectatorJoined");
+
+        // Send current game state to this spectator only (sanitized - no hole cards)
+        var table = _tableProvider(tableId);
+        if (table != null)
+        {
+            await _stateBroadcaster.SendGameStateToSpectatorAsync(table, Context.ConnectionId);
+        }
+    }
+
+    /// <summary>
+    /// Removes a player or spectator from a table's SignalR group.
+    /// Called when leaving a table.
     /// </summary>
     public async Task LeaveTableAsync()
     {
-        var connection = GetConnectionInfo();
+        var connection = _connectionManager.GetConnection(Context.ConnectionId);
         if (connection == null)
         {
             return;
@@ -72,35 +104,48 @@ public sealed class GameHub : Hub
         var groupName = GameHubConstants.GetTableGroupName(connection.TableId);
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
 
-        lock (_connectionsLock)
+        _connectionManager.RemoveConnection(Context.ConnectionId);
+
+        if (connection.PlayerId.HasValue)
         {
-            _connections.Remove(Context.ConnectionId);
+            _logger.LogInformation(
+                "Player {PlayerId} left table {TableId} (Connection: {ConnectionId})",
+                connection.PlayerId.Value, connection.TableId, Context.ConnectionId);
+
+            await Clients.Group(groupName).SendAsync("PlayerLeft", connection.PlayerId.Value);
         }
+        else
+        {
+            _logger.LogInformation(
+                "Spectator left table {TableId} (Connection: {ConnectionId})",
+                connection.TableId, Context.ConnectionId);
 
-        _logger.LogInformation(
-            "Player {PlayerId} left table {TableId} (Connection: {ConnectionId})",
-            connection.PlayerId, connection.TableId, Context.ConnectionId);
-
-        await Clients.Group(groupName).SendAsync("PlayerLeft", connection.PlayerId);
+            await Clients.Group(groupName).SendAsync("SpectatorLeft");
+        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        PlayerConnection? connection;
-        lock (_connectionsLock)
-        {
-            _connections.TryGetValue(Context.ConnectionId, out connection);
-            _connections.Remove(Context.ConnectionId);
-        }
+        var connection = _connectionManager.RemoveConnection(Context.ConnectionId);
 
         if (connection != null)
         {
             var groupName = GameHubConstants.GetTableGroupName(connection.TableId);
-            await Clients.Group(groupName).SendAsync("PlayerDisconnected", connection.PlayerId);
 
-            _logger.LogInformation(
-                "Player {PlayerId} disconnected from table {TableId} (Connection: {ConnectionId})",
-                connection.PlayerId, connection.TableId, Context.ConnectionId);
+            if (connection.PlayerId.HasValue)
+            {
+                await Clients.Group(groupName).SendAsync("PlayerDisconnected", connection.PlayerId.Value);
+
+                _logger.LogInformation(
+                    "Player {PlayerId} disconnected from table {TableId} (Connection: {ConnectionId})",
+                    connection.PlayerId.Value, connection.TableId, Context.ConnectionId);
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "Spectator disconnected from table {TableId} (Connection: {ConnectionId})",
+                    connection.TableId, Context.ConnectionId);
+            }
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -156,8 +201,8 @@ public sealed class GameHub : Hub
     /// </summary>
     public Task<AvailableActions?> GetAvailableActionsAsync()
     {
-        var connection = GetConnectionInfo();
-        if (connection == null)
+        var connection = _connectionManager.GetConnection(Context.ConnectionId);
+        if (connection?.PlayerId == null)
         {
             return Task.FromResult<AvailableActions?>(null);
         }
@@ -177,7 +222,7 @@ public sealed class GameHub : Hub
     /// </summary>
     public Task<ActionTimerState?> GetTimerStateAsync()
     {
-        var connection = GetConnectionInfo();
+        var connection = _connectionManager.GetConnection(Context.ConnectionId);
         if (connection == null)
         {
             return Task.FromResult<ActionTimerState?>(null);
@@ -196,17 +241,17 @@ public sealed class GameHub : Hub
         decimal amount)
     {
         // Validate connection and get player info
-        var connection = GetConnectionInfo();
-        if (connection == null)
+        var connection = _connectionManager.GetConnection(Context.ConnectionId);
+        if (connection?.PlayerId == null)
         {
             _logger.LogWarning(
                 "Action {ActionType} rejected: Connection {ConnectionId} not associated with a player",
                 actionType, Context.ConnectionId);
-            return ActionResult.Failure("Not connected to a table");
+            return ActionResult.Failure("Not connected to a table as a player");
         }
 
         var tableId = connection.TableId;
-        var playerId = connection.PlayerId;
+        var playerId = connection.PlayerId.Value;
 
         // Get table from server (authoritative source)
         var table = _tableProvider(tableId);
@@ -247,26 +292,25 @@ public sealed class GameHub : Hub
         var timeBankUsed = await _actionTimerService.CancelTimerAsync(tableId, playerId);
 
         // Update player's time bank if any was used
-        // TODO: Persist time bank update when database layer is implemented
         if (timeBankUsed > 0 && table.Players.TryGetValue(playerId, out var player))
         {
             player.ConsumeTimeBank(timeBankUsed);
         }
 
-        // Broadcast the action result to all players at the table
+        // Broadcast immediate action feedback to all viewers
         var groupName = GameHubConstants.GetTableGroupName(tableId);
         await Clients.Group(groupName).SendAsync("ActionExecuted", new ActionBroadcast
         {
             PlayerId = playerId,
             ActionType = actionType,
             Amount = amount,
-            Hand = result.Hand,
             NextPlayerId = result.NextPlayerId,
             BettingRoundComplete = result.BettingRoundComplete,
-            HandComplete = result.HandComplete,
-            NewCommunityCards = result.NewCommunityCards,
-            Winnings = result.Winnings
+            HandComplete = result.HandComplete
         });
+
+        // Broadcast full game state to all players (with sanitized hole cards)
+        await _stateBroadcaster.BroadcastGameStateAsync(table);
 
         // Start timer for next player if hand continues
         if (result.NextPlayerId.HasValue && !result.HandComplete)
@@ -307,38 +351,22 @@ public sealed class GameHub : Hub
             player.TimeBankSeconds);
     }
 
-    private PlayerConnection? GetConnectionInfo()
-    {
-        lock (_connectionsLock)
-        {
-            _connections.TryGetValue(Context.ConnectionId, out var connection);
-            return connection;
-        }
-    }
-
     #endregion
 
     #region Nested Types
 
     /// <summary>
-    /// Tracks a connection's associated player and table.
-    /// </summary>
-    private sealed record PlayerConnection(Guid TableId, Guid PlayerId);
-
-    /// <summary>
-    /// Broadcast payload for player actions.
+    /// Lightweight broadcast payload for immediate action feedback.
+    /// Full game state is sent separately via IGameStateBroadcaster.
     /// </summary>
     public sealed class ActionBroadcast
     {
         public required Guid PlayerId { get; init; }
         public required PlayerActionType ActionType { get; init; }
         public decimal Amount { get; init; }
-        public Hand? Hand { get; init; }
         public Guid? NextPlayerId { get; init; }
         public bool BettingRoundComplete { get; init; }
         public bool HandComplete { get; init; }
-        public Card[]? NewCommunityCards { get; init; }
-        public IReadOnlyDictionary<Guid, decimal>? Winnings { get; init; }
     }
 
     #endregion

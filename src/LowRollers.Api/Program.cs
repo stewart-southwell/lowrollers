@@ -6,6 +6,8 @@ using LowRollers.Api.Domain.StateMachine;
 using LowRollers.Api.Domain.StateMachine.Handlers;
 using LowRollers.Api.Features.GameEngine;
 using LowRollers.Api.Features.GameEngine.ActionTimer;
+using LowRollers.Api.Features.GameEngine.Broadcasting;
+using LowRollers.Api.Features.GameEngine.Connections;
 using LowRollers.Api.Features.GameEngine.Showdown;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,6 +55,15 @@ builder.Services.AddSingleton<IActionTimerBroadcaster, SignalRActionTimerBroadca
 
 // Register action timer service
 builder.Services.AddSingleton<IActionTimerService, ActionTimerService>();
+
+// Register connection manager for tracking SignalR connections
+builder.Services.AddSingleton<IConnectionManager, InMemoryConnectionManager>();
+
+// Register game state sanitizer (per-player view generation)
+builder.Services.AddSingleton<IGameStateSanitizer, GameStateSanitizer>();
+
+// Register game state broadcaster (SignalR adapter with per-player sanitization)
+builder.Services.AddSingleton<IGameStateBroadcaster, SignalRGameStateBroadcaster>();
 
 // Add OpenAPI
 builder.Services.AddOpenApi();
