@@ -109,7 +109,7 @@
   > - Deal community cards (3-1-1 pattern)
   > - Trigger showdown or award pot on all-fold
 
-- [ ] **Implement showdown logic**
+- [x] **Implement showdown logic**
   Task ID: `core-gameplay-09`
   > **Implementation**: Create `src/LowRollers.Api/Features/GameEngine/Showdown/ShowdownHandler.cs`
   > **Details**:

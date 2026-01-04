@@ -5,6 +5,7 @@ using LowRollers.Api.Domain.Models;
 using LowRollers.Api.Domain.Pots;
 using LowRollers.Api.Domain.Services;
 using LowRollers.Api.Domain.StateMachine;
+using LowRollers.Api.Features.GameEngine.Showdown;
 using Microsoft.Extensions.Logging;
 
 namespace LowRollers.Api.Features.GameEngine;
@@ -19,6 +20,7 @@ public sealed class GameOrchestrator : IGameOrchestrator
     private readonly IPotManager _potManager;
     private readonly IHandEventStore _eventStore;
     private readonly HandStateMachine _stateMachine;
+    private readonly IShowdownHandler _showdownHandler;
     private readonly ActionValidator _actionValidator;
     private readonly ILogger<GameOrchestrator> _logger;
 
@@ -31,12 +33,14 @@ public sealed class GameOrchestrator : IGameOrchestrator
         IPotManager potManager,
         IHandEventStore eventStore,
         HandStateMachine stateMachine,
+        IShowdownHandler showdownHandler,
         ILogger<GameOrchestrator> logger)
     {
         _shuffleService = shuffleService ?? throw new ArgumentNullException(nameof(shuffleService));
         _potManager = potManager ?? throw new ArgumentNullException(nameof(potManager));
         _eventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
         _stateMachine = stateMachine ?? throw new ArgumentNullException(nameof(stateMachine));
+        _showdownHandler = showdownHandler ?? throw new ArgumentNullException(nameof(showdownHandler));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _actionValidator = new ActionValidator();
     }
@@ -236,6 +240,53 @@ public sealed class GameOrchestrator : IGameOrchestrator
 
     /// <inheritdoc/>
     public BettingRound? GetBettingRound(Guid handId) => _bettingRounds.GetValueOrDefault(handId);
+
+    /// <inheritdoc/>
+    public async Task<ShowdownResult> ExecuteShowdownAsync(Table table, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+
+        var hand = table.CurrentHand;
+        if (hand == null)
+        {
+            return ShowdownResult.Failure("No active hand.");
+        }
+
+        if (hand.Phase != HandPhase.Showdown)
+        {
+            return ShowdownResult.Failure($"Hand is in {hand.Phase} phase, not showdown.");
+        }
+
+        // Execute showdown
+        var result = await _showdownHandler.ExecuteShowdownAsync(table, ct);
+
+        if (result.IsSuccess)
+        {
+            // Transition to complete
+            await _stateMachine.AdvanceAsync(hand, TransitionTrigger.ShowdownComplete);
+
+            // Record hand completed event
+            await RecordHandCompletedAsync(hand, result.TotalWinnings.Keys.ToList(), table, ct);
+
+            // Cleanup hand state
+            CleanupHand(hand.Id);
+            hand.CompletedAt = DateTimeOffset.UtcNow;
+            table.CurrentHand = null;
+
+            _logger.LogInformation(
+                "Hand {HandNumber} showdown complete. Total pot: {TotalPot}",
+                hand.HandNumber,
+                result.TotalWinnings.Values.Sum());
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RequestShowdownMuckAsync(Table table, Guid playerId, CancellationToken ct = default)
+    {
+        return await _showdownHandler.RequestMuckAsync(table, playerId, ct);
+    }
 
     #region Private Helpers
 

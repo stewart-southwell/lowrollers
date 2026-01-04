@@ -1,4 +1,5 @@
 using LowRollers.Api.Domain.Betting;
+using LowRollers.Api.Domain.Evaluation;
 using LowRollers.Api.Domain.Events;
 using LowRollers.Api.Domain.Models;
 using LowRollers.Api.Domain.Pots;
@@ -6,6 +7,7 @@ using LowRollers.Api.Domain.Services;
 using LowRollers.Api.Domain.StateMachine;
 using LowRollers.Api.Domain.StateMachine.Handlers;
 using LowRollers.Api.Features.GameEngine;
+using LowRollers.Api.Features.GameEngine.Showdown;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LowRollers.Api.Tests.Features.GameEngine;
@@ -34,11 +36,18 @@ public class GameOrchestratorTests
 
         var stateMachine = new HandStateMachine(handlers, NullLogger<HandStateMachine>.Instance);
 
+        var showdownHandler = new ShowdownHandler(
+            new HandEvaluationService(),
+            potManager,
+            _eventStore,
+            NullLogger<ShowdownHandler>.Instance);
+
         _orchestrator = new GameOrchestrator(
             shuffleService,
             potManager,
             _eventStore,
             stateMachine,
+            showdownHandler,
             NullLogger<GameOrchestrator>.Instance);
     }
 

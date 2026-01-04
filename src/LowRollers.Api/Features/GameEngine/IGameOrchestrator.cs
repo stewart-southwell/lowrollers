@@ -1,5 +1,6 @@
 using LowRollers.Api.Domain.Betting;
 using LowRollers.Api.Domain.Models;
+using LowRollers.Api.Features.GameEngine.Showdown;
 
 namespace LowRollers.Api.Features.GameEngine;
 
@@ -186,4 +187,23 @@ public interface IGameOrchestrator
     /// <param name="handId">The hand ID.</param>
     /// <returns>The betting round or null if not found.</returns>
     BettingRound? GetBettingRound(Guid handId);
+
+    /// <summary>
+    /// Executes the showdown for the current hand.
+    /// Evaluates hands, determines winners, and distributes pots.
+    /// </summary>
+    /// <param name="table">The table with the current hand at showdown.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The showdown result with winners and pot distributions.</returns>
+    Task<ShowdownResult> ExecuteShowdownAsync(Table table, CancellationToken ct = default);
+
+    /// <summary>
+    /// Allows a player to request mucking their cards at showdown.
+    /// Only valid for players who don't need to show (inferior hands).
+    /// </summary>
+    /// <param name="table">The table with the current hand.</param>
+    /// <param name="playerId">The player requesting to muck.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if muck request was accepted.</returns>
+    Task<bool> RequestShowdownMuckAsync(Table table, Guid playerId, CancellationToken ct = default);
 }
