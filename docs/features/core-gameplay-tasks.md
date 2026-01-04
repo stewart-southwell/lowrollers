@@ -67,7 +67,7 @@
   >   - Raise: amount >= CurrentBet + LastRaise
   >   - AllIn: always valid, calculates effective amount
 
-- [ ] **Implement pot management and side pots**
+- [x] **Implement pot management and side pots**
   Task ID: `core-gameplay-06`
   > **Implementation**: Create `src/LowRollers.Api/Domain/Pots/`
   > **Details**:
