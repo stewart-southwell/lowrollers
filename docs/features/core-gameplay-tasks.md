@@ -141,7 +141,7 @@
 
 ## SignalR Integration
 
-- [ ] **Create player action SignalR methods**
+- [x] **Create player action SignalR methods**
   Task ID: `core-gameplay-11`
   > **Implementation**: Extend `src/LowRollers.Api/Hubs/GameHub.cs`
   > **Details**:
