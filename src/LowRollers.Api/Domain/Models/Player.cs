@@ -142,4 +142,13 @@ public sealed class Player
     /// Determines if the player is still in the hand (not folded).
     /// </summary>
     public bool IsInHand => Status is PlayerStatus.Active or PlayerStatus.AllIn;
+
+    /// <summary>
+    /// Consumes time from the player's time bank.
+    /// </summary>
+    /// <param name="seconds">Seconds to consume from the time bank.</param>
+    public void ConsumeTimeBank(int seconds)
+    {
+        TimeBankSeconds = Math.Max(0, TimeBankSeconds - seconds);
+    }
 }

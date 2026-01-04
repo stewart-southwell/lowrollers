@@ -1,10 +1,12 @@
 using LowRollers.Api.Domain.Events;
+using LowRollers.Api.Domain.Models;
 using LowRollers.Api.Domain.Pots;
 using LowRollers.Api.Domain.Services;
 using LowRollers.Api.Domain.StateMachine;
 using LowRollers.Api.Domain.StateMachine.Handlers;
 using LowRollers.Api.Features.GameEngine;
 using LowRollers.Api.Features.GameEngine.ActionTimer;
+using LowRollers.Api.Features.GameEngine.Showdown;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,19 +31,28 @@ builder.Services.AddSingleton<IHandPhaseHandler, ShowdownPhaseHandler>();
 builder.Services.AddSingleton<IHandPhaseHandler, CompletePhaseHandler>();
 builder.Services.AddSingleton<HandStateMachine>();
 
+// Register showdown handler
+builder.Services.AddSingleton<IShowdownHandler, ShowdownHandler>();
+
 // Register game orchestrator
 builder.Services.AddSingleton<IGameOrchestrator, GameOrchestrator>();
 
-// TODO: Register ActionTimerService when dependencies are available (core-gameplay-11/12)
-// Requires:
-//   - IActionTimerBroadcaster implementation (SignalR adapter)
-//   - Table provider function (from table management service)
-// builder.Services.AddSingleton<IActionTimerService>(sp =>
-//     new ActionTimerService(
-//         sp.GetRequiredService<IActionTimerBroadcaster>(),
-//         sp.GetRequiredService<IGameOrchestrator>(),
-//         tableId => tableManager.GetTable(tableId),
-//         sp.GetRequiredService<ILogger<ActionTimerService>>()));
+// Register table manager (in-memory for development)
+// TODO: Replace with Redis/database-backed implementation for production
+builder.Services.AddSingleton<ITableManager, InMemoryTableManager>();
+
+// Register table provider function for services that need it
+builder.Services.AddSingleton<Func<Guid, Table?>>(sp =>
+{
+    var tableManager = sp.GetRequiredService<ITableManager>();
+    return tableId => tableManager.GetTable(tableId);
+});
+
+// Register action timer broadcaster (SignalR adapter)
+builder.Services.AddSingleton<IActionTimerBroadcaster, SignalRActionTimerBroadcaster>();
+
+// Register action timer service
+builder.Services.AddSingleton<IActionTimerService, ActionTimerService>();
 
 // Add OpenAPI
 builder.Services.AddOpenApi();
@@ -73,6 +84,6 @@ app.UseHttpsRedirection();
 app.UseCors();
 
 // Map SignalR hubs
-// app.MapHub<GameHub>("/hubs/game"); // Will be added when GameHub is created
+app.MapHub<GameHub>("/hubs/game");
 
 app.Run();
