@@ -19,7 +19,7 @@ var web = builder.AddJavaScriptApp("web", "../LowRollers.Web")
     .WithRunScript("start")
     .WithReference(api)
     .WaitFor(api)
-    .WithHttpEndpoint(port: 4200, env: "PORT")
+    .WithHttpEndpoint(targetPort: 4200)
     .WithExternalHttpEndpoints();
 
 builder.Build().Run();

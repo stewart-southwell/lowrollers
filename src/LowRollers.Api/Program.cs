@@ -1,3 +1,4 @@
+using LowRollers.Api.Domain.Evaluation;
 using LowRollers.Api.Domain.Events;
 using LowRollers.Api.Domain.Models;
 using LowRollers.Api.Domain.Pots;
@@ -22,6 +23,7 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<IShuffleService, ShuffleService>();
 builder.Services.AddSingleton<IPotManager, PotManager>();
 builder.Services.AddSingleton<IHandEventStore, InMemoryHandEventStore>();
+builder.Services.AddSingleton<IHandEvaluationService, HandEvaluationService>();
 
 // Register phase handlers for state machine
 builder.Services.AddSingleton<IHandPhaseHandler, WaitingPhaseHandler>();
