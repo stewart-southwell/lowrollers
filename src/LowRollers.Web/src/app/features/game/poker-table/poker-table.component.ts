@@ -20,16 +20,50 @@ export interface PotInfo {
   amount: number;
 }
 
-/** CSS positions for dealer button relative to each seat */
+/** Angles for each seat position around the ellipse */
+const SEAT_ANGLES: Record<SeatPosition, number> = {
+  'right': 0,
+  'bottom-right': 45,
+  'bottom': 90,
+  'bottom-left': 135,
+  'left': 180,
+  'top-left': 225,
+  'top': 270,
+  'top-right': 315
+};
+
+/**
+ * Calculate dealer button position on ellipse (inside the table on the felt).
+ * Uses same geometry as seats but with negative offset to place inside table.
+ */
+function calculateDealerButtonPosition(
+  position: SeatPosition,
+  tableWidthPercent = 80,
+  tableAspectRatio = 0.5625,
+  offsetPercent = -8
+): string {
+  const angle = SEAT_ANGLES[position];
+  const radians = (angle * Math.PI) / 180;
+
+  const a = (tableWidthPercent / 2) + offsetPercent;
+  const b = (tableWidthPercent * tableAspectRatio / 2) + offsetPercent;
+
+  const x = 50 + (a * Math.cos(radians));
+  const y = 50 + (b * Math.sin(radians));
+
+  return `left: ${x.toFixed(1)}%; top: ${y.toFixed(1)}%; transform: translate(-50%, -50%);`;
+}
+
+/** Pre-computed dealer button positions using ellipse calculation */
 const DEALER_BUTTON_POSITIONS: Record<SeatPosition, string> = {
-  'top': 'top: 18%; left: 55%;',
-  'top-right': 'top: 25%; right: 22%;',
-  'right': 'top: 50%; right: 15%;',
-  'bottom-right': 'bottom: 25%; right: 22%;',
-  'bottom': 'bottom: 18%; left: 45%;',
-  'bottom-left': 'bottom: 25%; left: 22%;',
-  'left': 'top: 50%; left: 15%;',
-  'top-left': 'top: 25%; left: 22%;'
+  'top': calculateDealerButtonPosition('top'),
+  'top-right': calculateDealerButtonPosition('top-right'),
+  'right': calculateDealerButtonPosition('right'),
+  'bottom-right': calculateDealerButtonPosition('bottom-right'),
+  'bottom': calculateDealerButtonPosition('bottom'),
+  'bottom-left': calculateDealerButtonPosition('bottom-left'),
+  'left': calculateDealerButtonPosition('left'),
+  'top-left': calculateDealerButtonPosition('top-left')
 };
 
 /**
@@ -248,18 +282,18 @@ const DEALER_BUTTON_POSITIONS: Record<SeatPosition, string> = {
     /* Dealer Button */
     .dealer-button {
       position: absolute;
-      width: 48px;
-      height: 48px;
+      width: 36px;
+      height: 36px;
       background: #fff;
-      border: 4px solid #eab308;
+      border: 3px solid #eab308;
       border-radius: var(--radius-full);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 900;
       color: #000;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
       z-index: var(--z-dealer-button);
     }
 

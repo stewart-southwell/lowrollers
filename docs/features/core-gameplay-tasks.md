@@ -184,7 +184,7 @@
   > - Include dealer button component
   > - Use PrimeNG components where appropriate
 
-- [ ] **Create player seat component**
+- [x] **Create player seat component**
   Task ID: `core-gameplay-14`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/player-seat/`
   > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.player-seat`, `.player-container`, `.avatar-wrapper`, `.player-info`
