@@ -14,60 +14,52 @@ Low Rollers enables 4-10 friends to play Texas Hold'em online with:
 
 ## Architecture
 
-```mermaid
-flowchart TB
-    subgraph Client["Angular 21 Frontend"]
-        UI[Poker Table UI]
-        Signals[Angular Signals]
-        SignalRClient[SignalR Client]
-    end
-
-    subgraph Backend[".NET 10 Backend"]
-        subgraph API["LowRollers.Api"]
-            GameHub[GameHub<br/>SignalR Hub]
-            Orchestrator[Game Orchestrator]
-            Timer[Action Timer Service]
-            Broadcaster[Game State Broadcaster]
-        end
-
-        subgraph Domain["Domain Layer"]
-            StateMachine[Hand State Machine]
-            Betting[Betting Logic]
-            Pots[Pot Manager]
-            Showdown[Showdown Handler]
-            Events[Event Store]
-        end
-
-        subgraph Services["Services"]
-            Shuffle[Shuffle Service]
-            Evaluator[Hand Evaluator]
-        end
-    end
-
-    subgraph Infrastructure["Infrastructure"]
-        Redis[(Redis<br/>Session/State)]
-        Postgres[(PostgreSQL<br/>Persistence)]
-        LiveKit[LiveKit<br/>Video SFU]
-    end
-
-    UI --> Signals
-    Signals --> SignalRClient
-    SignalRClient <-->|WebSocket| GameHub
-    GameHub --> Orchestrator
-    Orchestrator --> StateMachine
-    Orchestrator --> Timer
-    Orchestrator --> Broadcaster
-    StateMachine --> Betting
-    Betting --> Pots
-    StateMachine --> Showdown
-    Showdown --> Evaluator
-    Orchestrator --> Events
-    Orchestrator --> Shuffle
-    Broadcaster --> GameHub
-    API --> Redis
-    API --> Postgres
-    Client <-->|WebRTC| LiveKit
 ```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            ANGULAR 21 FRONTEND                              │
+│  ┌──────────────┐    ┌─────────────────┐    ┌──────────────────────────┐   │
+│  │ Poker Table  │───▶│ Angular Signals │───▶│ SignalR Client           │   │
+│  │ Components   │    │ (State Mgmt)    │    │                          │   │
+│  └──────────────┘    └─────────────────┘    └────────────┬─────────────┘   │
+└──────────────────────────────────────────────────────────┼─────────────────┘
+                                                           │ WebSocket
+                                                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            .NET 10 BACKEND                                  │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                         SignalR GameHub                              │   │
+│  │  • Player Actions (Fold/Check/Call/Raise/AllIn)                     │   │
+│  │  • Game State Broadcasting (per-player sanitization)                │   │
+│  └──────────────────────────────────┬──────────────────────────────────┘   │
+│                                     │                                       │
+│  ┌──────────────────────────────────▼──────────────────────────────────┐   │
+│  │                       Game Orchestrator                              │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌────────────┐  │   │
+│  │  │ State       │  │ Betting     │  │ Pot         │  │ Action     │  │   │
+│  │  │ Machine     │  │ Logic       │  │ Manager     │  │ Timer      │  │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘  └────────────┘  │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                     │                                       │
+│  ┌──────────────────────────────────▼──────────────────────────────────┐   │
+│  │                         Domain Services                              │   │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────┐  │   │
+│  │  │ Shuffle Service │  │ Hand Evaluator  │  │ Event Store         │  │   │
+│  │  │ (Crypto RNG)    │  │ (7-card eval)   │  │ (Hand History)      │  │   │
+│  │  └─────────────────┘  └─────────────────┘  └─────────────────────┘  │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└───────────────┬─────────────────────────────────────────┬───────────────────┘
+                │                                         │
+                ▼                                         ▼
+┌───────────────────────────┐             ┌───────────────────────────────────┐
+│         Redis             │             │          PostgreSQL               │
+│  • Session State          │             │  • Hand History                   │
+│  • Real-time Game State   │             │  • Player Data                    │
+└───────────────────────────┘             └───────────────────────────────────┘
+```
+
+**Data Flow:** Player Action → SignalR → Orchestrator → Domain Logic → State Update → Broadcast to All Players
 
 ## Tech Stack
 
@@ -133,6 +125,7 @@ lowrollers/
 | Game state broadcasting | Done |
 | Per-player state sanitization | Done |
 | Angular poker table component | Done |
+| Player seat component | Done |
 | Guest access & table joining | Pending |
 | Reconnection handling | Pending |
 
