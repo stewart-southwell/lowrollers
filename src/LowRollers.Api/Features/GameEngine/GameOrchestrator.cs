@@ -14,7 +14,7 @@ namespace LowRollers.Api.Features.GameEngine;
 /// Thin orchestrator that coordinates poker hand flow by delegating to domain services.
 /// Maintains only the minimal state needed: deck and betting round per active hand.
 /// </summary>
-public sealed class GameOrchestrator : IGameOrchestrator
+public sealed partial class GameOrchestrator : IGameOrchestrator
 {
     private readonly IShuffleService _shuffleService;
     private readonly IPotManager _potManager;
@@ -101,9 +101,7 @@ public sealed class GameOrchestrator : IGameOrchestrator
         // Record events
         await RecordHandStartAsync(hand, holeCards, sbPlayer, bbPlayer, ct);
 
-        _logger.LogInformation(
-            "Hand {HandNumber} started. Button: {Button}, SB: {SB}, BB: {BB}",
-            hand.HandNumber, table.ButtonPosition, sbPos, bbPos);
+        Log.HandStarted(_logger, hand.HandNumber, table.ButtonPosition, sbPos, bbPos);
 
         return HandStartResult.Success(hand, holeCards);
     }
@@ -240,12 +238,10 @@ public sealed class GameOrchestrator : IGameOrchestrator
         if (timeBankConsumed > 0 && table.Players.TryGetValue(playerId, out var player))
         {
             player.TimeBankSeconds = Math.Max(0, player.TimeBankSeconds - timeBankConsumed);
-            _logger.LogDebug(
-                "Deducted {TimeBankConsumed}s from player {PlayerId} time bank. Remaining: {Remaining}s",
-                timeBankConsumed, playerId, player.TimeBankSeconds);
+            Log.TimeBankDeducted(_logger, timeBankConsumed, playerId, player.TimeBankSeconds);
         }
 
-        _logger.LogInformation("Forcing timeout fold for player {PlayerId}", playerId);
+        Log.ForcingTimeoutFold(_logger, playerId);
         return await ExecutePlayerActionAsync(table, playerId, PlayerActionType.Fold, ct: ct);
     }
 
@@ -284,10 +280,7 @@ public sealed class GameOrchestrator : IGameOrchestrator
             hand.CompletedAt = DateTimeOffset.UtcNow;
             table.CurrentHand = null;
 
-            _logger.LogInformation(
-                "Hand {HandNumber} showdown complete. Total pot: {TotalPot}",
-                hand.HandNumber,
-                result.TotalWinnings.Values.Sum());
+            Log.ShowdownComplete(_logger, hand.HandNumber, result.TotalWinnings.Values.Sum());
         }
 
         return result;
@@ -421,7 +414,7 @@ public sealed class GameOrchestrator : IGameOrchestrator
         }
     }
 
-    private bool IsBettingRoundComplete(Table table, Hand hand, BettingRound round)
+    private static bool IsBettingRoundComplete(Table table, Hand hand, BettingRound round)
     {
         var activePlayers = table.Players.Values
             .Where(p => hand.PlayerIds.Contains(p.Id) && p.Status == PlayerStatus.Active)
@@ -436,7 +429,7 @@ public sealed class GameOrchestrator : IGameOrchestrator
         return allMatched && allActed;
     }
 
-    private Guid? GetNextToAct(Table table, Hand hand, BettingRound round)
+    private static Guid? GetNextToAct(Table table, Hand hand, BettingRound round)
     {
         var currentPos = table.Players[hand.CurrentPlayerId!.Value].SeatPosition;
         var activePlayers = table.Players.Values
@@ -489,8 +482,7 @@ public sealed class GameOrchestrator : IGameOrchestrator
         CleanupHand(hand.Id);
         table.CurrentHand = null;
 
-        _logger.LogInformation("Hand {Num} complete - all folded. Winner: {Winner}",
-            hand.HandNumber, winner?.DisplayName ?? "none");
+        Log.HandCompleteAllFolded(_logger, hand.HandNumber, winner?.DisplayName ?? "none");
 
         return new ActionResult
         {
@@ -549,7 +541,7 @@ public sealed class GameOrchestrator : IGameOrchestrator
 
         hand.CurrentPlayerId = GetFirstToAct(activePlayers, hand.ButtonPosition, isPreflop: false);
 
-        _logger.LogInformation("Hand {Num} advanced to {Phase}", hand.HandNumber, hand.Phase);
+        Log.HandAdvancedToPhase(_logger, hand.HandNumber, hand.Phase);
 
         return new ActionResult
         {
@@ -793,4 +785,25 @@ public sealed class GameOrchestrator : IGameOrchestrator
     }
 
     #endregion
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information, Message = "Hand {HandNumber} started. Button: {Button}, SB: {SB}, BB: {BB}")]
+        public static partial void HandStarted(ILogger logger, int handNumber, int button, int sb, int bb);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Deducted {TimeBankConsumed}s from player {PlayerId} time bank. Remaining: {Remaining}s")]
+        public static partial void TimeBankDeducted(ILogger logger, int timeBankConsumed, Guid playerId, int remaining);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Forcing timeout fold for player {PlayerId}")]
+        public static partial void ForcingTimeoutFold(ILogger logger, Guid playerId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Hand {HandNumber} showdown complete. Total pot: {TotalPot}")]
+        public static partial void ShowdownComplete(ILogger logger, int handNumber, decimal totalPot);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Hand {HandNumber} complete - all folded. Winner: {Winner}")]
+        public static partial void HandCompleteAllFolded(ILogger logger, int handNumber, string winner);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Hand {HandNumber} advanced to {Phase}")]
+        public static partial void HandAdvancedToPhase(ILogger logger, int handNumber, HandPhase phase);
+    }
 }

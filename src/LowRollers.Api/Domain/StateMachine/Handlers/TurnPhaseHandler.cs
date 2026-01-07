@@ -6,7 +6,7 @@ namespace LowRollers.Api.Domain.StateMachine.Handlers;
 /// <summary>
 /// Handles the Turn phase - deal 4th community card, third betting round.
 /// </summary>
-public sealed class TurnPhaseHandler : BasePhaseHandler
+public sealed partial class TurnPhaseHandler : BasePhaseHandler
 {
     public TurnPhaseHandler(ILogger<TurnPhaseHandler> logger) : base(logger)
     {
@@ -16,9 +16,7 @@ public sealed class TurnPhaseHandler : BasePhaseHandler
 
     public override Task OnEnterAsync(Hand hand, PhaseTransitionContext context)
     {
-        Logger.LogInformation(
-            "Hand {HandId} entering turn. Community cards count: {CardCount}",
-            hand.Id, hand.CommunityCards.Count);
+        Log.EnteringTurn(Logger, hand.Id, hand.CommunityCards.Count);
 
         // Reset betting for new round
         hand.CurrentBet = 0;
@@ -45,5 +43,11 @@ public sealed class TurnPhaseHandler : BasePhaseHandler
         }
 
         return PhaseTransitionValidation.Valid();
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information, Message = "Hand {HandId} entering turn. Community cards count: {CardCount}")]
+        public static partial void EnteringTurn(ILogger logger, Guid handId, int cardCount);
     }
 }

@@ -180,7 +180,7 @@ public sealed class PotManager : IPotManager
     /// <summary>
     /// Calculates pots when side pots are needed, preserving existing pot amounts.
     /// </summary>
-    private List<Pot> CalculatePotsWithExisting(
+    private static List<Pot> CalculatePotsWithExisting(
         List<Pot> existingPots,
         IReadOnlyDictionary<Guid, decimal> contributions,
         IReadOnlySet<Guid> allInPlayerIds,

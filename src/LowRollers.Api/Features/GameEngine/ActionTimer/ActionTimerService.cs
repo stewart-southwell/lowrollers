@@ -10,7 +10,7 @@ namespace LowRollers.Api.Features.GameEngine.ActionTimer;
 /// Background service that manages action timers for poker tables.
 /// Uses System.Timers to tick every second and broadcast timer updates to clients.
 /// </summary>
-public sealed class ActionTimerService : IActionTimerService, IDisposable
+public sealed partial class ActionTimerService : IActionTimerService, IDisposable
 {
     private const int WarningThresholdSeconds = 10;
     private const int TickIntervalMs = 1000;
@@ -47,7 +47,7 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
         // If action timer is disabled (0), don't start a timer
         if (actionSeconds <= 0)
         {
-            _logger.LogDebug("Action timer disabled for table {TableId}", tableId);
+            Log.ActionTimerDisabled(_logger, tableId);
             return false;
         }
 
@@ -77,16 +77,13 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
             // Failed to add, cleanup
             timer.Dispose();
             context.CancellationTokenSource.Dispose();
-            _logger.LogWarning("Failed to start timer for table {TableId} - timer already exists", tableId);
+            Log.FailedToStartTimerAlreadyExists(_logger, tableId);
             return false;
         }
 
         timer.Start();
 
-        _logger.LogInformation(
-            "Started action timer for player {PlayerId} at table {TableId}. " +
-            "Time: {Seconds}s, TimeBank: {TimeBankEnabled} ({TimeBankSeconds}s)",
-            playerId, tableId, actionSeconds, timeBankEnabled, timeBankSeconds);
+        Log.StartedActionTimer(_logger, playerId, tableId, actionSeconds, timeBankEnabled, timeBankSeconds);
 
         // Broadcast timer started
         await _broadcaster.BroadcastTimerStartedAsync(
@@ -112,9 +109,7 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
         // Validate it's the right player
         if (state.ActivePlayerId != playerId)
         {
-            _logger.LogWarning(
-                "Timer cancel mismatch: expected player {Expected}, got {Actual}",
-                state.ActivePlayerId, playerId);
+            Log.TimerCancelMismatch(_logger, state.ActivePlayerId, playerId);
         }
 
         // Calculate time bank used
@@ -126,9 +121,7 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
         context.CancellationTokenSource.Cancel();
         context.CancellationTokenSource.Dispose();
 
-        _logger.LogInformation(
-            "Cancelled timer for player {PlayerId} at table {TableId}. TimeBankUsed: {TimeBankUsed}s",
-            playerId, tableId, timeBankUsed);
+        Log.CancelledTimer(_logger, playerId, tableId, timeBankUsed);
 
         // Broadcast timer cancelled
         await _broadcaster.BroadcastTimerCancelledAsync(tableId, playerId, ct);
@@ -163,7 +156,7 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
         {
             context.Timer.Stop();
             context.IsPaused = true;
-            _logger.LogDebug("Paused timer for table {TableId}", tableId);
+            Log.PausedTimer(_logger, tableId);
         }
         return Task.CompletedTask;
     }
@@ -175,7 +168,7 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
         {
             context.IsPaused = false;
             context.Timer.Start();
-            _logger.LogDebug("Resumed timer for table {TableId}", tableId);
+            Log.ResumedTimer(_logger, tableId);
         }
         return Task.CompletedTask;
     }
@@ -189,7 +182,7 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
             context.Timer.Dispose();
             context.CancellationTokenSource.Cancel();
             context.CancellationTokenSource.Dispose();
-            _logger.LogDebug("Stopped all timers for table {TableId}", tableId);
+            Log.StoppedAllTimers(_logger, tableId);
         }
         return Task.CompletedTask;
     }
@@ -282,15 +275,13 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing timer tick for table {TableId}", tableId);
+            Log.ErrorProcessingTimerTick(_logger, ex, tableId);
         }
     }
 
     private async Task HandleTimerExpiredAsync(Guid tableId, ActionTimerState state, CancellationToken ct)
     {
-        _logger.LogInformation(
-            "Timer expired for player {PlayerId} at table {TableId}. Auto-folding.",
-            state.ActivePlayerId, tableId);
+        Log.TimerExpiredAutoFolding(_logger, state.ActivePlayerId, tableId);
 
         // Remove and cleanup timer first to prevent further ticks
         if (_timers.TryRemove(tableId, out var removed))
@@ -316,14 +307,12 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex,
-                    "Failed to execute auto-fold for player {PlayerId} at table {TableId}",
-                    state.ActivePlayerId, tableId);
+                Log.FailedToExecuteAutoFold(_logger, ex, state.ActivePlayerId, tableId);
             }
         }
         else
         {
-            _logger.LogWarning("Table {TableId} not found for auto-fold", tableId);
+            Log.TableNotFoundForAutoFold(_logger, tableId);
         }
     }
 
@@ -372,5 +361,44 @@ public sealed class ActionTimerService : IActionTimerService, IDisposable
         /// Timer.Elapsed runs on thread pool threads, so we need to protect state access.
         /// </summary>
         public object StateLock { get; } = new();
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Action timer disabled for table {TableId}")]
+        public static partial void ActionTimerDisabled(ILogger logger, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to start timer for table {TableId} - timer already exists")]
+        public static partial void FailedToStartTimerAlreadyExists(ILogger logger, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Started action timer for player {PlayerId} at table {TableId}. Time: {Seconds}s, TimeBank: {TimeBankEnabled} ({TimeBankSeconds}s)")]
+        public static partial void StartedActionTimer(ILogger logger, Guid playerId, Guid tableId, int seconds, bool timeBankEnabled, int timeBankSeconds);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Timer cancel mismatch: expected player {Expected}, got {Actual}")]
+        public static partial void TimerCancelMismatch(ILogger logger, Guid expected, Guid actual);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Cancelled timer for player {PlayerId} at table {TableId}. TimeBankUsed: {TimeBankUsed}s")]
+        public static partial void CancelledTimer(ILogger logger, Guid playerId, Guid tableId, int timeBankUsed);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Paused timer for table {TableId}")]
+        public static partial void PausedTimer(ILogger logger, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Resumed timer for table {TableId}")]
+        public static partial void ResumedTimer(ILogger logger, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Stopped all timers for table {TableId}")]
+        public static partial void StoppedAllTimers(ILogger logger, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Error processing timer tick for table {TableId}")]
+        public static partial void ErrorProcessingTimerTick(ILogger logger, Exception ex, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Timer expired for player {PlayerId} at table {TableId}. Auto-folding.")]
+        public static partial void TimerExpiredAutoFolding(ILogger logger, Guid playerId, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Failed to execute auto-fold for player {PlayerId} at table {TableId}")]
+        public static partial void FailedToExecuteAutoFold(ILogger logger, Exception ex, Guid playerId, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Table {TableId} not found for auto-fold")]
+        public static partial void TableNotFoundForAutoFold(ILogger logger, Guid tableId);
     }
 }

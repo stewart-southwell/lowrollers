@@ -1,0 +1,63 @@
+# Editor configuration, see https://editorconfig.org
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# C# files
+[*.cs]
+indent_size = 4
+dotnet_sort_system_directives_first = true
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+
+# Prefer expression-bodied members for simple operations
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+
+# Prefer pattern matching
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+
+# Prefer modern null checking
+csharp_style_null_propagation = true:suggestion
+csharp_style_conditional_delegate_call = true:suggestion
+
+# Namespace and using preferences
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# TypeScript files
+[*.ts]
+quote_type = single
+
+# Angular templates
+[*.html]
+indent_size = 2
+
+# SCSS/CSS
+[*.{scss,css}]
+indent_size = 2
+
+# JSON files (Angular configs, package.json, etc.)
+[*.json]
+indent_size = 2
+
+# Markdown files
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false
+
+# Solution and project files
+[*.{sln,csproj,props,targets}]
+indent_size = 2
+
+# YAML files (CI/CD configs)
+[*.{yml,yaml}]
+indent_size = 2

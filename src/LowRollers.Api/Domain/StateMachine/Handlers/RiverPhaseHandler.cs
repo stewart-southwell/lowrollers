@@ -6,7 +6,7 @@ namespace LowRollers.Api.Domain.StateMachine.Handlers;
 /// <summary>
 /// Handles the River phase - deal 5th community card, final betting round.
 /// </summary>
-public sealed class RiverPhaseHandler : BasePhaseHandler
+public sealed partial class RiverPhaseHandler : BasePhaseHandler
 {
     public RiverPhaseHandler(ILogger<RiverPhaseHandler> logger) : base(logger)
     {
@@ -16,9 +16,7 @@ public sealed class RiverPhaseHandler : BasePhaseHandler
 
     public override Task OnEnterAsync(Hand hand, PhaseTransitionContext context)
     {
-        Logger.LogInformation(
-            "Hand {HandId} entering river. Community cards count: {CardCount}",
-            hand.Id, hand.CommunityCards.Count);
+        Log.EnteringRiver(Logger, hand.Id, hand.CommunityCards.Count);
 
         // Reset betting for new round
         hand.CurrentBet = 0;
@@ -44,5 +42,11 @@ public sealed class RiverPhaseHandler : BasePhaseHandler
         }
 
         return PhaseTransitionValidation.Valid();
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information, Message = "Hand {HandId} entering river. Community cards count: {CardCount}")]
+        public static partial void EnteringRiver(ILogger logger, Guid handId, int cardCount);
     }
 }

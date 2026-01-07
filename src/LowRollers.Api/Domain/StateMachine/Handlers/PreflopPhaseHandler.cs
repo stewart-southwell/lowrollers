@@ -6,7 +6,7 @@ namespace LowRollers.Api.Domain.StateMachine.Handlers;
 /// <summary>
 /// Handles the Preflop phase - deal hole cards, collect blinds, first betting round.
 /// </summary>
-public sealed class PreflopPhaseHandler : BasePhaseHandler
+public sealed partial class PreflopPhaseHandler : BasePhaseHandler
 {
     public PreflopPhaseHandler(ILogger<PreflopPhaseHandler> logger) : base(logger)
     {
@@ -16,9 +16,7 @@ public sealed class PreflopPhaseHandler : BasePhaseHandler
 
     public override Task OnEnterAsync(Hand hand, PhaseTransitionContext context)
     {
-        Logger.LogInformation(
-            "Hand {HandId} starting preflop. Button: seat {Button}, Blinds: {SB}/{BB}",
-            hand.Id, hand.ButtonPosition, hand.SmallBlindAmount, hand.BigBlindAmount);
+        Log.StartingPreflop(Logger, hand.Id, hand.ButtonPosition, hand.SmallBlindAmount, hand.BigBlindAmount);
 
         // Set initial betting state
         hand.CurrentBet = hand.BigBlindAmount;
@@ -40,5 +38,11 @@ public sealed class PreflopPhaseHandler : BasePhaseHandler
         // e.g., ensure all players have acted, betting is complete, etc.
 
         return PhaseTransitionValidation.Valid();
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information, Message = "Hand {HandId} starting preflop. Button: seat {Button}, Blinds: {SmallBlind}/{BigBlind}")]
+        public static partial void StartingPreflop(ILogger logger, Guid handId, int button, decimal smallBlind, decimal bigBlind);
     }
 }

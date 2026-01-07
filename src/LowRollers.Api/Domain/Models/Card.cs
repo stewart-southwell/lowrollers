@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace LowRollers.Api.Domain.Models;
 
 /// <summary>
@@ -52,7 +54,7 @@ public readonly record struct Card(Suit Suit, Rank Rank)
             Rank.Queen => "Q",
             Rank.King => "K",
             Rank.Ace => "A",
-            _ => ((int)Rank).ToString()
+            _ => ((int)Rank).ToString(CultureInfo.InvariantCulture)
         };
 
         var suitChar = Suit switch

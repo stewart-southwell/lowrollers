@@ -14,31 +14,31 @@ public sealed class InMemoryHandEventStore : IHandEventStore
     private readonly ConcurrentDictionary<Guid, HandSummary> _summaries = new();
     private readonly object _lock = new();
 
-    public Task AppendAsync(IHandEvent @event, CancellationToken ct = default)
+    public Task AppendAsync(IHandEvent handEvent, CancellationToken ct = default)
     {
         lock (_lock)
         {
-            var events = _eventsByHand.GetOrAdd(@event.HandId, _ => []);
+            var events = _eventsByHand.GetOrAdd(handEvent.HandId, _ => []);
 
             // Check for duplicate sequence number
-            if (events.Any(e => e.SequenceNumber == @event.SequenceNumber))
+            if (events.Any(e => e.SequenceNumber == handEvent.SequenceNumber))
             {
                 throw new InvalidOperationException(
-                    $"Event with sequence number {@event.SequenceNumber} already exists for hand {@event.HandId}");
+                    $"Event with sequence number {handEvent.SequenceNumber} already exists for hand {handEvent.HandId}");
             }
 
-            events.Add(@event);
+            events.Add(handEvent);
 
             // Track table association from HandStartedEvent
-            if (@event is HandStartedEvent started)
+            if (handEvent is HandStartedEvent started)
             {
-                _handToTable[@event.HandId] = started.TableId;
+                _handToTable[handEvent.HandId] = started.TableId;
             }
 
             // Create summary on completion
-            if (@event is HandCompletedEvent completed)
+            if (handEvent is HandCompletedEvent completed)
             {
-                CreateSummary(@event.HandId, completed);
+                CreateSummary(handEvent.HandId, completed);
             }
         }
 

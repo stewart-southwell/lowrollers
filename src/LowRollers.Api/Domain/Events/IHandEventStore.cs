@@ -26,12 +26,12 @@ public interface IHandEventStore
     /// <summary>
     /// Appends a single event to the store.
     /// </summary>
-    /// <param name="event">The event to append.</param>
+    /// <param name="handEvent">The event to append.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <exception cref="InvalidOperationException">
     /// Thrown if the sequence number already exists for this hand.
     /// </exception>
-    Task AppendAsync(IHandEvent @event, CancellationToken ct = default);
+    Task AppendAsync(IHandEvent handEvent, CancellationToken ct = default);
 
     /// <summary>
     /// Appends multiple events to the store atomically.

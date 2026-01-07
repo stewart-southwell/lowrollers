@@ -10,7 +10,7 @@ namespace LowRollers.Api.Features.GameEngine.Showdown;
 /// Handles showdown logic including show order, hand evaluation,
 /// auto-mucking, and pot distribution.
 /// </summary>
-public sealed class ShowdownHandler : IShowdownHandler
+public sealed partial class ShowdownHandler : IShowdownHandler
 {
     private readonly IHandEvaluationService _evaluationService;
     private readonly IPotManager _potManager;
@@ -86,8 +86,8 @@ public sealed class ShowdownHandler : IShowdownHandler
         // Clean up muck requests for this hand
         _muckRequests.Remove(hand.Id);
 
-        _logger.LogInformation(
-            "Showdown complete for hand {HandNumber}. Winners: {Winners}",
+        Log.ShowdownComplete(
+            _logger,
             hand.HandNumber,
             string.Join(", ", totalWinnings.Keys.Select(id =>
                 table.Players.TryGetValue(id, out var p) ? p.DisplayName : id.ToString())));
@@ -124,9 +124,7 @@ public sealed class ShowdownHandler : IShowdownHandler
 
         muckSet.Add(playerId);
 
-        _logger.LogDebug(
-            "Player {PlayerId} requested muck for hand {HandId}",
-            playerId, hand.Id);
+        Log.MuckRequested(_logger, playerId, hand.Id);
 
         return await Task.FromResult(true);
     }
@@ -154,7 +152,7 @@ public sealed class ShowdownHandler : IShowdownHandler
             .ToList();
     }
 
-    private List<Guid> GetShowOrderInternal(Table table, Hand hand, List<Player> playersInHand)
+    private static List<Guid> GetShowOrderInternal(Table table, Hand hand, List<Player> playersInHand)
     {
         // Last aggressor shows first
         // If no aggressor (all checked to showdown), first to act shows first
@@ -222,9 +220,7 @@ public sealed class ShowdownHandler : IShowdownHandler
         {
             if (player.HoleCards == null || player.HoleCards.Length != 2)
             {
-                _logger.LogWarning(
-                    "Player {PlayerId} has invalid hole cards at showdown",
-                    player.Id);
+                Log.InvalidHoleCardsAtShowdown(_logger, player.Id);
                 continue;
             }
 
@@ -323,10 +319,7 @@ public sealed class ShowdownHandler : IShowdownHandler
                     ShowdownOrder = showOrderNum
                 }, ct);
 
-                _logger.LogDebug(
-                    "Player {DisplayName} {MuckType} at showdown",
-                    player.DisplayName,
-                    isAutoMuck ? "auto-mucked" : "mucked");
+                Log.PlayerMuckedAtShowdown(_logger, player.DisplayName, isAutoMuck ? "auto-mucked" : "mucked");
             }
             else
             {
@@ -364,10 +357,7 @@ public sealed class ShowdownHandler : IShowdownHandler
                     ShowOrder = showOrderNum
                 }, ct);
 
-                _logger.LogDebug(
-                    "Player {DisplayName} showed {HandDescription}",
-                    player.DisplayName,
-                    playerHand.Description);
+                Log.PlayerShowedHand(_logger, player.DisplayName, playerHand.Description);
             }
         }
 
@@ -406,7 +396,7 @@ public sealed class ShowdownHandler : IShowdownHandler
         return (results, potAwards);
     }
 
-    private bool CanPlayerWinAnyPot(
+    private static bool CanPlayerWinAnyPot(
         Hand hand,
         Guid playerId,
         Dictionary<Guid, (Player Player, EvaluatedHand Hand)> evaluatedPlayers,
@@ -477,9 +467,7 @@ public sealed class ShowdownHandler : IShowdownHandler
 
             if (eligibleShowing.Count == 0)
             {
-                _logger.LogWarning(
-                    "Pot {PotId} has no eligible players with shown hands",
-                    pot.Id);
+                Log.PotHasNoEligiblePlayers(_logger, pot.Id);
                 continue;
             }
 
@@ -512,7 +500,7 @@ public sealed class ShowdownHandler : IShowdownHandler
         return awards;
     }
 
-    private Dictionary<Guid, decimal> CalculateSplitAmounts(
+    private static Dictionary<Guid, decimal> CalculateSplitAmounts(
         Table table,
         Hand hand,
         decimal potAmount,
@@ -672,4 +660,25 @@ public sealed class ShowdownHandler : IShowdownHandler
     }
 
     #endregion
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information, Message = "Showdown complete for hand {HandNumber}. Winners: {Winners}")]
+        public static partial void ShowdownComplete(ILogger logger, int handNumber, string winners);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Player {PlayerId} requested muck for hand {HandId}")]
+        public static partial void MuckRequested(ILogger logger, Guid playerId, Guid handId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Player {PlayerId} has invalid hole cards at showdown")]
+        public static partial void InvalidHoleCardsAtShowdown(ILogger logger, Guid playerId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Player {DisplayName} {MuckType} at showdown")]
+        public static partial void PlayerMuckedAtShowdown(ILogger logger, string displayName, string muckType);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Player {DisplayName} showed {HandDescription}")]
+        public static partial void PlayerShowedHand(ILogger logger, string displayName, string handDescription);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Pot {PotId} has no eligible players with shown hands")]
+        public static partial void PotHasNoEligiblePlayers(ILogger logger, Guid potId);
+    }
 }

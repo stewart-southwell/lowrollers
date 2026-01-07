@@ -9,7 +9,7 @@ namespace LowRollers.Api.Features.GameEngine.Broadcasting;
 /// Implements game state broadcasting using SignalR.
 /// Sends personalized state views to each connected client based on their role.
 /// </summary>
-public sealed class SignalRGameStateBroadcaster : IGameStateBroadcaster
+public sealed partial class SignalRGameStateBroadcaster : IGameStateBroadcaster
 {
     private readonly IHubContext<GameHub> _hubContext;
     private readonly IConnectionManager _connectionManager;
@@ -64,15 +64,11 @@ public sealed class SignalRGameStateBroadcaster : IGameStateBroadcaster
         await Task.WhenAll(tasks);
 
         var elapsed = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
-        _logger.LogDebug(
-            "Broadcast game state for table {TableId} to {PlayerCount} players and {SpectatorCount} spectators in {ElapsedMs:F1}ms",
-            table.Id, playerConnections.Count, spectatorConnections.Count, elapsed);
+        Log.BroadcastGameStateCompleted(_logger, table.Id, playerConnections.Count, spectatorConnections.Count, elapsed);
 
         if (elapsed > 100)
         {
-            _logger.LogWarning(
-                "Game state broadcast exceeded 100ms target: {ElapsedMs:F1}ms for table {TableId}",
-                elapsed, table.Id);
+            Log.BroadcastExceededTarget(_logger, elapsed, table.Id);
         }
     }
 
@@ -86,9 +82,7 @@ public sealed class SignalRGameStateBroadcaster : IGameStateBroadcaster
         var connectionId = _connectionManager.GetPlayerConnectionId(table.Id, playerId);
         if (connectionId == null)
         {
-            _logger.LogWarning(
-                "Cannot send state to player {PlayerId}: not connected to table {TableId}",
-                playerId, table.Id);
+            Log.PlayerNotConnected(_logger, playerId, table.Id);
             return;
         }
 
@@ -96,9 +90,7 @@ public sealed class SignalRGameStateBroadcaster : IGameStateBroadcaster
         await _hubContext.Clients.Client(connectionId)
             .SendAsync("GameStateUpdated", state, ct);
 
-        _logger.LogDebug(
-            "Sent game state to player {PlayerId} on table {TableId}",
-            playerId, table.Id);
+        Log.SentGameStateToPlayer(_logger, playerId, table.Id);
     }
 
     /// <inheritdoc/>
@@ -112,9 +104,7 @@ public sealed class SignalRGameStateBroadcaster : IGameStateBroadcaster
         await _hubContext.Clients.Client(connectionId)
             .SendAsync("GameStateUpdated", state, ct);
 
-        _logger.LogDebug(
-            "Sent game state to spectator (Connection: {ConnectionId}) on table {TableId}",
-            connectionId, table.Id);
+        Log.SentGameStateToSpectator(_logger, connectionId, table.Id);
     }
 
     /// <inheritdoc/>
@@ -161,10 +151,7 @@ public sealed class SignalRGameStateBroadcaster : IGameStateBroadcaster
 
         await Task.WhenAll(tasks);
 
-        _logger.LogInformation(
-            "Broadcast hand started for table {TableId}, hand #{HandNumber} to {ClientCount} clients",
-            table.Id, table.CurrentHand?.HandNumber ?? 0,
-            playerConnections.Count + spectatorConnections.Count);
+        Log.BroadcastHandStarted(_logger, table.Id, table.CurrentHand?.HandNumber ?? 0, playerConnections.Count + spectatorConnections.Count);
     }
 
     /// <inheritdoc/>
@@ -202,9 +189,7 @@ public sealed class SignalRGameStateBroadcaster : IGameStateBroadcaster
         await _hubContext.Clients.Group(groupName)
             .SendAsync("HandCompleted", message, ct);
 
-        _logger.LogInformation(
-            "Broadcast hand completed for table {TableId}, hand #{HandNumber}. Winners: {WinnerCount}",
-            table.Id, message.HandNumber, winners.Count);
+        Log.BroadcastHandCompleted(_logger, table.Id, message.HandNumber, winners.Count);
     }
 
     /// <inheritdoc/>
@@ -223,9 +208,34 @@ public sealed class SignalRGameStateBroadcaster : IGameStateBroadcaster
                 TimeoutSeconds = timeoutSeconds
             }, ct);
 
-        _logger.LogDebug(
-            "Broadcast action required for player {PlayerId} at table {TableId}. Timeout: {Timeout}s",
-            playerId, tableId, timeoutSeconds);
+        Log.BroadcastActionRequired(_logger, playerId, tableId, timeoutSeconds);
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Broadcast game state for table {TableId} to {PlayerCount} players and {SpectatorCount} spectators in {ElapsedMs:F1}ms")]
+        public static partial void BroadcastGameStateCompleted(ILogger logger, Guid tableId, int playerCount, int spectatorCount, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Game state broadcast exceeded 100ms target: {ElapsedMs:F1}ms for table {TableId}")]
+        public static partial void BroadcastExceededTarget(ILogger logger, double elapsedMs, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot send state to player {PlayerId}: not connected to table {TableId}")]
+        public static partial void PlayerNotConnected(ILogger logger, Guid playerId, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Sent game state to player {PlayerId} on table {TableId}")]
+        public static partial void SentGameStateToPlayer(ILogger logger, Guid playerId, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Sent game state to spectator (Connection: {ConnectionId}) on table {TableId}")]
+        public static partial void SentGameStateToSpectator(ILogger logger, string connectionId, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Broadcast hand started for table {TableId}, hand #{HandNumber} to {ClientCount} clients")]
+        public static partial void BroadcastHandStarted(ILogger logger, Guid tableId, int handNumber, int clientCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Broadcast hand completed for table {TableId}, hand #{HandNumber}. Winners: {WinnerCount}")]
+        public static partial void BroadcastHandCompleted(ILogger logger, Guid tableId, int handNumber, int winnerCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Broadcast action required for player {PlayerId} at table {TableId}. Timeout: {Timeout}s")]
+        public static partial void BroadcastActionRequired(ILogger logger, Guid playerId, Guid tableId, int timeout);
     }
 
     #region Message Types

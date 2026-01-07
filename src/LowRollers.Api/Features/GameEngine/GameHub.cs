@@ -12,7 +12,7 @@ namespace LowRollers.Api.Features.GameEngine;
 /// SignalR hub for real-time poker game communication.
 /// Handles player actions, game state broadcasting, and connection management.
 /// </summary>
-public sealed class GameHub : Hub
+public sealed partial class GameHub : Hub
 {
     private readonly IGameOrchestrator _gameOrchestrator;
     private readonly IActionTimerService _actionTimerService;
@@ -50,9 +50,7 @@ public sealed class GameHub : Hub
 
         _connectionManager.AddPlayerConnection(Context.ConnectionId, tableId, playerId);
 
-        _logger.LogInformation(
-            "Player {PlayerId} joined table {TableId} (Connection: {ConnectionId})",
-            playerId, tableId, Context.ConnectionId);
+        Log.PlayerJoinedTable(_logger, playerId, tableId, Context.ConnectionId);
 
         await Clients.Group(groupName).SendAsync("PlayerJoined", playerId);
 
@@ -75,9 +73,7 @@ public sealed class GameHub : Hub
 
         _connectionManager.AddSpectatorConnection(Context.ConnectionId, tableId);
 
-        _logger.LogInformation(
-            "Spectator joined table {TableId} (Connection: {ConnectionId})",
-            tableId, Context.ConnectionId);
+        Log.SpectatorJoinedTable(_logger, tableId, Context.ConnectionId);
 
         await Clients.Group(groupName).SendAsync("SpectatorJoined");
 
@@ -108,17 +104,13 @@ public sealed class GameHub : Hub
 
         if (connection.PlayerId.HasValue)
         {
-            _logger.LogInformation(
-                "Player {PlayerId} left table {TableId} (Connection: {ConnectionId})",
-                connection.PlayerId.Value, connection.TableId, Context.ConnectionId);
+            Log.PlayerLeftTable(_logger, connection.PlayerId.Value, connection.TableId, Context.ConnectionId);
 
             await Clients.Group(groupName).SendAsync("PlayerLeft", connection.PlayerId.Value);
         }
         else
         {
-            _logger.LogInformation(
-                "Spectator left table {TableId} (Connection: {ConnectionId})",
-                connection.TableId, Context.ConnectionId);
+            Log.SpectatorLeftTable(_logger, connection.TableId, Context.ConnectionId);
 
             await Clients.Group(groupName).SendAsync("SpectatorLeft");
         }
@@ -136,15 +128,11 @@ public sealed class GameHub : Hub
             {
                 await Clients.Group(groupName).SendAsync("PlayerDisconnected", connection.PlayerId.Value);
 
-                _logger.LogInformation(
-                    "Player {PlayerId} disconnected from table {TableId} (Connection: {ConnectionId})",
-                    connection.PlayerId.Value, connection.TableId, Context.ConnectionId);
+                Log.PlayerDisconnected(_logger, connection.PlayerId.Value, connection.TableId, Context.ConnectionId);
             }
             else
             {
-                _logger.LogDebug(
-                    "Spectator disconnected from table {TableId} (Connection: {ConnectionId})",
-                    connection.TableId, Context.ConnectionId);
+                Log.SpectatorDisconnected(_logger, connection.TableId, Context.ConnectionId);
             }
         }
 
@@ -244,9 +232,7 @@ public sealed class GameHub : Hub
         var connection = _connectionManager.GetConnection(Context.ConnectionId);
         if (connection?.PlayerId == null)
         {
-            _logger.LogWarning(
-                "Action {ActionType} rejected: Connection {ConnectionId} not associated with a player",
-                actionType, Context.ConnectionId);
+            Log.ActionRejectedNoPlayer(_logger, actionType, Context.ConnectionId);
             return ActionResult.Failure("Not connected to a table as a player");
         }
 
@@ -257,24 +243,18 @@ public sealed class GameHub : Hub
         var table = _tableProvider(tableId);
         if (table == null)
         {
-            _logger.LogWarning(
-                "Action {ActionType} rejected: Table {TableId} not found",
-                actionType, tableId);
+            Log.ActionRejectedTableNotFound(_logger, actionType, tableId);
             return ActionResult.Failure("Table not found");
         }
 
         // Validate it's the player's turn
         if (table.CurrentHand?.CurrentPlayerId != playerId)
         {
-            _logger.LogWarning(
-                "Action {ActionType} rejected: Not player {PlayerId}'s turn",
-                actionType, playerId);
+            Log.ActionRejectedNotPlayersTurn(_logger, actionType, playerId);
             return ActionResult.Failure("Not your turn");
         }
 
-        _logger.LogInformation(
-            "Player {PlayerId} executing {ActionType} at table {TableId} (amount: {Amount})",
-            playerId, actionType, tableId, amount);
+        Log.PlayerExecutingAction(_logger, playerId, actionType, tableId, amount);
 
         // Execute the action
         var result = await _gameOrchestrator.ExecutePlayerActionAsync(
@@ -282,9 +262,7 @@ public sealed class GameHub : Hub
 
         if (!result.IsSuccess)
         {
-            _logger.LogWarning(
-                "Action {ActionType} failed for player {PlayerId}: {Error}",
-                actionType, playerId, result.Error);
+            Log.ActionFailed(_logger, actionType, playerId, result.Error ?? "Unknown error");
             return result;
         }
 
@@ -318,9 +296,7 @@ public sealed class GameHub : Hub
             await StartTimerForNextPlayer(table, result.NextPlayerId.Value);
         }
 
-        _logger.LogInformation(
-            "Action {ActionType} completed for player {PlayerId}. Next: {NextPlayerId}, RoundComplete: {RoundComplete}",
-            actionType, playerId, result.NextPlayerId, result.BettingRoundComplete);
+        Log.ActionCompleted(_logger, actionType, playerId, result.NextPlayerId, result.BettingRoundComplete);
 
         return result;
     }
@@ -370,4 +346,43 @@ public sealed class GameHub : Hub
     }
 
     #endregion
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information, Message = "Player {PlayerId} joined table {TableId} (Connection: {ConnectionId})")]
+        public static partial void PlayerJoinedTable(ILogger logger, Guid playerId, Guid tableId, string connectionId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Spectator joined table {TableId} (Connection: {ConnectionId})")]
+        public static partial void SpectatorJoinedTable(ILogger logger, Guid tableId, string connectionId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Player {PlayerId} left table {TableId} (Connection: {ConnectionId})")]
+        public static partial void PlayerLeftTable(ILogger logger, Guid playerId, Guid tableId, string connectionId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Spectator left table {TableId} (Connection: {ConnectionId})")]
+        public static partial void SpectatorLeftTable(ILogger logger, Guid tableId, string connectionId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Player {PlayerId} disconnected from table {TableId} (Connection: {ConnectionId})")]
+        public static partial void PlayerDisconnected(ILogger logger, Guid playerId, Guid tableId, string connectionId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Spectator disconnected from table {TableId} (Connection: {ConnectionId})")]
+        public static partial void SpectatorDisconnected(ILogger logger, Guid tableId, string connectionId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Action {ActionType} rejected: Connection {ConnectionId} not associated with a player")]
+        public static partial void ActionRejectedNoPlayer(ILogger logger, PlayerActionType actionType, string connectionId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Action {ActionType} rejected: Table {TableId} not found")]
+        public static partial void ActionRejectedTableNotFound(ILogger logger, PlayerActionType actionType, Guid tableId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Action {ActionType} rejected: Not player {PlayerId}'s turn")]
+        public static partial void ActionRejectedNotPlayersTurn(ILogger logger, PlayerActionType actionType, Guid playerId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Player {PlayerId} executing {ActionType} at table {TableId} (amount: {Amount})")]
+        public static partial void PlayerExecutingAction(ILogger logger, Guid playerId, PlayerActionType actionType, Guid tableId, decimal amount);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Action {ActionType} failed for player {PlayerId}: {Error}")]
+        public static partial void ActionFailed(ILogger logger, PlayerActionType actionType, Guid playerId, string error);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Action {ActionType} completed for player {PlayerId}. Next: {NextPlayerId}, RoundComplete: {RoundComplete}")]
+        public static partial void ActionCompleted(ILogger logger, PlayerActionType actionType, Guid playerId, Guid? nextPlayerId, bool roundComplete);
+    }
 }

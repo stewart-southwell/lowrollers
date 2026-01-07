@@ -6,7 +6,7 @@ namespace LowRollers.Api.Domain.StateMachine.Handlers;
 /// <summary>
 /// Handles the Flop phase - deal 3 community cards, second betting round.
 /// </summary>
-public sealed class FlopPhaseHandler : BasePhaseHandler
+public sealed partial class FlopPhaseHandler : BasePhaseHandler
 {
     public FlopPhaseHandler(ILogger<FlopPhaseHandler> logger) : base(logger)
     {
@@ -16,9 +16,7 @@ public sealed class FlopPhaseHandler : BasePhaseHandler
 
     public override Task OnEnterAsync(Hand hand, PhaseTransitionContext context)
     {
-        Logger.LogInformation(
-            "Hand {HandId} entering flop. Community cards count: {CardCount}",
-            hand.Id, hand.CommunityCards.Count);
+        Log.EnteringFlop(Logger, hand.Id, hand.CommunityCards.Count);
 
         // Reset betting for new round
         hand.CurrentBet = 0;
@@ -45,5 +43,11 @@ public sealed class FlopPhaseHandler : BasePhaseHandler
         }
 
         return PhaseTransitionValidation.Valid();
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information, Message = "Hand {HandId} entering flop. Community cards count: {CardCount}")]
+        public static partial void EnteringFlop(ILogger logger, Guid handId, int cardCount);
     }
 }

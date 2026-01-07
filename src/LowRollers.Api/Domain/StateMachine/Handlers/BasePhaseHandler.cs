@@ -6,14 +6,14 @@ namespace LowRollers.Api.Domain.StateMachine.Handlers;
 /// <summary>
 /// Base implementation of a hand phase handler with common functionality.
 /// </summary>
-public abstract class BasePhaseHandler : IHandPhaseHandler
+public abstract partial class BasePhaseHandler : IHandPhaseHandler
 {
-    protected readonly ILogger Logger;
-
     protected BasePhaseHandler(ILogger logger)
     {
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    protected ILogger Logger { get; }
 
     /// <inheritdoc />
     public abstract HandPhase Phase { get; }
@@ -21,14 +21,14 @@ public abstract class BasePhaseHandler : IHandPhaseHandler
     /// <inheritdoc />
     public virtual Task OnEnterAsync(Hand hand, PhaseTransitionContext context)
     {
-        Logger.LogDebug("Entering {Phase} for hand {HandId}", Phase, hand.Id);
+        Log.EnteringPhase(Logger, Phase, hand.Id);
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
     public virtual Task OnExitAsync(Hand hand, PhaseTransitionContext context)
     {
-        Logger.LogDebug("Exiting {Phase} for hand {HandId}", Phase, hand.Id);
+        Log.ExitingPhase(Logger, Phase, hand.Id);
         return Task.CompletedTask;
     }
 
@@ -43,5 +43,14 @@ public abstract class BasePhaseHandler : IHandPhaseHandler
         }
 
         return PhaseTransitionValidation.Valid();
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Entering {Phase} for hand {HandId}")]
+        public static partial void EnteringPhase(ILogger logger, HandPhase phase, Guid handId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Exiting {Phase} for hand {HandId}")]
+        public static partial void ExitingPhase(ILogger logger, HandPhase phase, Guid handId);
     }
 }
