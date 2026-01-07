@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CardComponent } from '../../../shared/card/card.component';
+import { CommunityCardsComponent } from '../community-cards';
 import { Card } from '../../../shared/models/card.models';
 
 /** Position identifiers for seats around the table */
@@ -74,7 +74,7 @@ const DEALER_BUTTON_POSITIONS: Record<SeatPosition, string> = {
 @Component({
   selector: 'app-poker-table',
   standalone: true,
-  imports: [CommonModule, CardComponent],
+  imports: [CommonModule, CommunityCardsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="table-area">
@@ -110,15 +110,10 @@ const DEALER_BUTTON_POSITIONS: Record<SeatPosition, string> = {
         }
 
         <!-- Community Cards Area -->
-        <div class="community-cards" role="region" aria-label="Community cards">
-          @for (card of communityCards(); track $index) {
-            <app-card [rank]="card.rank" [suit]="card.suit" />
-          }
-          <!-- Empty card slots as placeholders -->
-          @for (i of emptyCardSlots(); track i) {
-            <div class="card-placeholder" aria-hidden="true"></div>
-          }
-        </div>
+        <app-community-cards
+          [cards]="communityCards()"
+          [winningCardIndices]="winningCardIndices()"
+        />
 
         <!-- Dealer Button -->
         @if (dealerPosition()) {
@@ -260,23 +255,13 @@ const DEALER_BUTTON_POSITIONS: Record<SeatPosition, string> = {
       text-shadow: 0 2px 10px rgba(234, 179, 8, 0.5);
     }
 
-    /* Community Cards */
-    .community-cards {
+    /* Community Cards - position the component on the table */
+    app-community-cards {
       position: absolute;
       top: 55%;
       left: 50%;
       transform: translate(-50%, -50%);
-      display: flex;
-      gap: 8px;
       z-index: var(--z-cards);
-    }
-
-    .card-placeholder {
-      width: var(--card-width);
-      height: var(--card-height);
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px dashed rgba(255, 255, 255, 0.2);
-      border-radius: var(--radius-md);
     }
 
     /* Dealer Button */
@@ -325,16 +310,14 @@ export class PokerTableComponent {
   /** Community cards to display (0-5 cards) */
   communityCards = input<Card[]>([]);
 
+  /** Indices of winning cards to highlight (0-4) */
+  winningCardIndices = input<number[]>([]);
+
   /** Current pot information */
   pot = input<PotInfo | null>(null);
 
   /** Position of the dealer button */
   dealerPosition = input<SeatPosition | null>(null);
-
-  /** Calculate empty card slots for placeholders */
-  emptyCardSlots = computed(() =>
-    Array.from({ length: 5 - this.communityCards().length }, (_, i) => i)
-  );
 
   /** Format currency for display */
   formatCurrency(amount: number): string {

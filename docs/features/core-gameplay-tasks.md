@@ -199,7 +199,7 @@
   > - Bet display: chip stack graphics + amount badge, positioned toward table center
   > - Empty seat: dashed border, "Open Seat" text, hover state
 
-- [ ] **Create community cards component**
+- [x] **Create community cards component**
   Task ID: `core-gameplay-15`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/community-cards/`
   > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.community-cards`, `.card`

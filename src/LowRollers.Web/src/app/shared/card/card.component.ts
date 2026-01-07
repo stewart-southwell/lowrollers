@@ -31,6 +31,7 @@ import { CardSuit, CardRank, isRedSuit, getSuitSymbol } from '../models/card.mod
         [class.card-mini]="size() === 'mini'"
         [class.card-large]="size() === 'large'"
         [class.highlighted]="highlighted()"
+        [class.pulsing]="pulsing()"
         [class.folded]="folded()"
         role="img"
         [attr.aria-label]="rank() + ' of ' + suit()"
@@ -79,12 +80,31 @@ import { CardSuit, CardRank, isRedSuit, getSuitSymbol } from '../models/card.mod
       border-radius: var(--radius-lg);
     }
 
-    /* Highlighted state - for current player's cards */
+    /* Highlighted state - for current player's cards or winning cards */
     .highlighted {
       border: 4px solid #3b82f6;
       box-shadow:
         0 0 0 4px rgba(59, 130, 246, 0.5),
         0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Pulsing animation for winning cards at showdown */
+    .highlighted.pulsing {
+      animation: winningPulse 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes winningPulse {
+      from {
+        box-shadow:
+          0 0 0 4px rgba(59, 130, 246, 0.5),
+          0 10px 30px rgba(0, 0, 0, 0.4);
+      }
+      to {
+        box-shadow:
+          0 0 0 6px rgba(59, 130, 246, 0.7),
+          0 0 20px rgba(59, 130, 246, 0.5),
+          0 10px 30px rgba(0, 0, 0, 0.4);
+      }
     }
 
     /* Folded state - greyed out */
@@ -204,8 +224,11 @@ export class CardComponent {
   /** Card size variant */
   size = input<'normal' | 'mini' | 'large'>('normal');
 
-  /** Whether to show blue highlight (for current player's cards) */
+  /** Whether to show blue highlight (for current player's cards or winning cards) */
   highlighted = input<boolean>(false);
+
+  /** Whether to show pulsing animation (for winning cards at showdown) */
+  pulsing = input<boolean>(false);
 
   /** Whether to show folded/greyed out state */
   folded = input<boolean>(false);
