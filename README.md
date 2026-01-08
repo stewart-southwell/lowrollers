@@ -98,7 +98,7 @@ lowrollers/
 ├── tests/
 │   └── LowRollers.Api.Tests/     # xUnit tests
 ├── docs/
-│   ├── designs/                  # UI mockups
+│   ├── designs/                  # UI mockups (poker-table-mockup-v4.html)
 │   └── features/                 # Feature task tracking
 ├── specs/
 │   └── poker_brd_v1.1.md         # Business Requirements Document
@@ -126,6 +126,9 @@ lowrollers/
 | Per-player state sanitization | Done |
 | Angular poker table component | Done |
 | Player seat component | Done |
+| Community cards component | Done |
+| Pot display component | Done |
+| Action panel component | Done |
 | Guest access & table joining | Pending |
 | Reconnection handling | Pending |
 

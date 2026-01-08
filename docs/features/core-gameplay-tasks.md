@@ -168,12 +168,12 @@
 
 ## Angular Components
 
-> **DESIGN REFERENCE**: Use `docs/designs/poker-table-mockup-v2.html` as the approved design reference for all UI components below. This mockup contains the complete styling, layout, and SVG assets (card backs, casino chips) to be used during implementation.
+> **DESIGN REFERENCE**: Use `docs/designs/poker-table-mockup-v4.html` as the approved design reference for all UI components below. This mockup contains the complete styling, layout, and SVG assets (card backs, casino chips) to be used during implementation.
 
 - [x] **Create poker table component**
   Task ID: `core-gameplay-13`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/poker-table/`
-  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.poker-table`, `.table-rail`, `.table-felt`, `.table-area`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v4.html` - `.poker-table`, `.table-rail`, `.table-felt`, `.table-area`
   > **Details**:
   > - `poker-table.component.ts` - Main table layout
   > - Dark navy rail with green felt interior (racetrack/oval shape with ~42% border-radius)
@@ -187,7 +187,7 @@
 - [x] **Create player seat component**
   Task ID: `core-gameplay-14`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/player-seat/`
-  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.player-seat`, `.player-container`, `.avatar-wrapper`, `.player-info`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v4.html` - `.player-seat`, `.player-container`, `.avatar-wrapper`, `.player-info`
   > **Details**:
   > - `player-seat.component.ts`
   > - Horizontal layout: avatar with info card beside it (direction varies by seat position)
@@ -202,7 +202,7 @@
 - [x] **Create community cards component**
   Task ID: `core-gameplay-15`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/community-cards/`
-  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.community-cards`, `.card`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v4.html` - `.community-cards`, `.card`
   > **Details**:
   > - Display 5 card positions in horizontal row
   > - Card design: white background, rank/suit in corners, large center suit
@@ -214,7 +214,7 @@
 - [x] **Create pot display component**
   Task ID: `core-gameplay-16`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/pot-display/`
-  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.pot-display`, `.pot-chips`, `.pot-info`, `.chip-stack`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v4.html` - `.pot-display`, `.pot-chips`, `.pot-info`, `.chip-stack`
   > **Details**:
   > - Chip stack graphics using SVG symbols (`#chipRed`, `#chipBlue`, `#chipGreen`, `#chipBlack`)
   > - Stacked chip columns with overlapping effect
@@ -225,7 +225,7 @@
 - [x] **Create action panel component**
   Task ID: `core-gameplay-17`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/action-panel/`
-  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.action-panel`, `.action-btn`, `.btn-fold`, `.btn-call`, `.btn-raise`, `.btn-allin`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v4.html` - `.action-panel`, `.action-btn`, `.btn-fold`, `.btn-call`, `.btn-raise`, `.btn-allin`
   > **Details**:
   > - `action-panel.component.ts`
   > - Fixed bottom bar with dark background
@@ -247,7 +247,7 @@
 - [ ] **Create raise slider component**
   Task ID: `core-gameplay-18`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/action-panel/raise-slider/`
-  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.raise-control`, `.raise-slider`, `.raise-input`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v4.html` - `.raise-control`, `.raise-slider`, `.raise-input`
   > **Details**:
   > - Dark container with "Raise to:" label
   > - Slider from min raise to max (all-in)
@@ -259,7 +259,7 @@
 - [ ] **Create action timer component**
   Task ID: `core-gameplay-19`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/action-timer/`
-  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.action-timer-bar`, `.timer-bar-progress`, `.timer-text`
+  > **Design Reference**: `docs/designs/poker-table-mockup-v4.html` - `.action-timer-bar`, `.timer-bar-progress`, `.timer-text`
   > **Details**:
   > - Timer bar on active player's avatar (not separate component)
   > - Progress bar depletes over 30 seconds
@@ -272,7 +272,7 @@
 - [ ] **Implement keyboard hotkeys**
   Task ID: `core-gameplay-20`
   > **Implementation**: Add to `src/LowRollers.Web/src/app/features/game/action-panel/`
-  > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.hotkey` class on buttons
+  > **Design Reference**: `docs/designs/poker-table-mockup-v4.html` - `.hotkey` class on buttons
   > **Details**:
   > - F = Fold
   > - C = Call/Check (contextual)
