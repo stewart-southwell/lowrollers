@@ -69,7 +69,7 @@ export const DEFAULT_QUICK_BET_PRESETS: QuickBetPreset[] = [
   { label: '3BB', type: 'bb', multiplier: 3 },
   { label: '1/2 Pot', type: 'pot', multiplier: 0.5 },
   { label: 'POT', type: 'pot', multiplier: 1 },
-  { label: 'MAX', type: 'max' },
+  { label: '2x Pot', type: 'pot', multiplier: 2 },
 ];
 
 /**
