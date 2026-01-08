@@ -222,7 +222,7 @@
   > - Side pots listed separately with eligible player count
   > - Animate chip additions on pot changes
 
-- [ ] **Create action panel component**
+- [x] **Create action panel component**
   Task ID: `core-gameplay-17`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/action-panel/`
   > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.action-panel`, `.action-btn`, `.btn-fold`, `.btn-call`, `.btn-raise`, `.btn-allin`

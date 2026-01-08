@@ -1,7 +1,13 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { PokerTableComponent, SeatPosition } from './poker-table/poker-table.component';
 import { PlayerSeatComponent, PlayerData } from './player-seat';
 import { type Pot, createMainPot, createSidePot } from './pot-display';
+import {
+  ActionPanelComponent,
+  type CurrentPlayerState,
+  type BettingContext,
+  type PlayerActionEvent,
+} from './action-panel';
 import { Card } from '../../shared/models/card.models';
 
 /**
@@ -11,7 +17,7 @@ import { Card } from '../../shared/models/card.models';
 @Component({
   selector: 'app-game-page',
   standalone: true,
-  imports: [PokerTableComponent, PlayerSeatComponent],
+  imports: [PokerTableComponent, PlayerSeatComponent, ActionPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Background pattern -->
@@ -32,6 +38,13 @@ import { Card } from '../../shared/models/card.models';
         />
       }
     </app-poker-table>
+
+    <!-- Action Panel -->
+    <app-action-panel
+      [player]="currentPlayer()"
+      [bettingContext]="bettingContext()"
+      (actionTaken)="onActionTaken($event)"
+    />
   `,
   styles: [
     `
@@ -63,6 +76,37 @@ export class GamePageComponent {
 
   /** Demo dealer position */
   dealerPosition = signal<SeatPosition>('top-right');
+
+  /**
+   * Demo betting context.
+   * bigBlind=50 makes quick bet buttons useful: 2BB=$100 (equals minRaise), 3BB=$150
+   */
+  bettingContext = signal<BettingContext>({
+    currentBet: 50,
+    playerContribution: 0,
+    minRaise: 100,
+    maxRaise: 845,
+    bigBlind: 50,
+    potSize: 327,
+  });
+
+  /** Current player state (derived from the player with isCurrentTurn) */
+  currentPlayer = computed<CurrentPlayerState | null>(() => {
+    const activePlayer = this.seats().find((s) => s.player?.isCurrentTurn)?.player;
+    if (!activePlayer) return null;
+    return {
+      id: activePlayer.id,
+      name: activePlayer.name,
+      avatar: activePlayer.avatar,
+      chips: activePlayer.chips,
+      isCurrentTurn: activePlayer.isCurrentTurn ?? false,
+      remainingTime: activePlayer.remainingTime,
+      totalTime: activePlayer.totalTime,
+      // Time bank fields (optional - will be undefined if not on player model)
+      hasTimeBank: (activePlayer as { hasTimeBank?: boolean }).hasTimeBank,
+      timeBankRemaining: (activePlayer as { timeBankRemaining?: number }).timeBankRemaining,
+    };
+  });
 
   /** All seats around the table with demo player data */
   seats = signal<{ position: SeatPosition; player: PlayerData | null }[]>([
@@ -182,5 +226,11 @@ export class GamePageComponent {
   onSeatClick(position: SeatPosition): void {
     console.log('Seat clicked:', position);
     // In a real app, this would open a dialog to take the seat
+  }
+
+  /** Handle player action from action panel */
+  onActionTaken(event: PlayerActionEvent): void {
+    console.log('Action taken:', event);
+    // In a real app, this would send the action to the server via SignalR
   }
 }
