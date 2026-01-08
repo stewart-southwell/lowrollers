@@ -1,8 +1,14 @@
 import type { Card } from '../../../shared/models/card.models';
 import type { SeatPosition } from '../poker-table/poker-table.component';
 
-// Re-export for convenience
+// Re-export types for convenience
 export type { SeatPosition } from '../poker-table/poker-table.component';
+export type { ChipColor, ChipStack } from '../../../shared/models/chip.models';
+export {
+  amountToChipStacks,
+  getChipSymbolId,
+  createChipArray,
+} from '../../../shared/models/chip.models';
 
 /**
  * Player's status in the current hand.
@@ -13,15 +19,6 @@ export type { SeatPosition } from '../poker-table/poker-table.component';
  * - 'sitting-out': Player is at the table but not participating in hands
  */
 export type PlayerStatus = 'playing' | 'folded' | 'all-in' | 'sitting-out';
-
-/** Chip color for stack display */
-export type ChipColor = 'white' | 'red' | 'blue' | 'green' | 'black';
-
-/** Chip representation for display */
-export interface ChipStack {
-  color: ChipColor;
-  count: number;
-}
 
 /**
  * Player data for the seat component.
@@ -72,65 +69,14 @@ export type StyleObject = Record<string, string>;
 /** Get bet position style based on seat position */
 export function getBetPositionStyle(position: SeatPosition): StyleObject {
   const positions: Record<SeatPosition, StyleObject> = {
-    'top': { top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '8px' },
+    top: { top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '8px' },
     'top-right': { top: '105%', left: '20px' },
-    'right': { top: '50%', left: '-80px', transform: 'translateY(-50%)' },
+    right: { top: '50%', left: '-80px', transform: 'translateY(-50%)' },
     'bottom-right': { bottom: '105%', left: '20px' },
-    'bottom': { bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' },
+    bottom: { bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' },
     'bottom-left': { bottom: '105%', right: '20px' },
-    'left': { top: '50%', right: '-80px', transform: 'translateY(-50%)' },
-    'top-left': { top: '105%', right: '20px' }
+    left: { top: '50%', right: '-80px', transform: 'translateY(-50%)' },
+    'top-left': { top: '105%', right: '20px' },
   };
   return positions[position];
-}
-
-/** Convert chip amount to visual chip stacks (max 5 chips per color for display) */
-export function amountToChipStacks(amount: number): ChipStack[] {
-  const stacks: ChipStack[] = [];
-  let remaining = amount;
-
-  // Black chips = $100
-  const blackCount = Math.floor(remaining / 100);
-  const blackDisplayed = Math.min(blackCount, 5);
-  if (blackDisplayed > 0) {
-    stacks.push({ color: 'black', count: blackDisplayed });
-    remaining -= blackDisplayed * 100;
-  }
-
-  // Green chips = $25
-  const greenCount = Math.floor(remaining / 25);
-  const greenDisplayed = Math.min(greenCount, 5);
-  if (greenDisplayed > 0) {
-    stacks.push({ color: 'green', count: greenDisplayed });
-    remaining -= greenDisplayed * 25;
-  }
-
-  // Blue chips = $10
-  const blueCount = Math.floor(remaining / 10);
-  const blueDisplayed = Math.min(blueCount, 5);
-  if (blueDisplayed > 0) {
-    stacks.push({ color: 'blue', count: blueDisplayed });
-    remaining -= blueDisplayed * 10;
-  }
-
-  // Red chips = $5
-  const redCount = Math.floor(remaining / 5);
-  const redDisplayed = Math.min(redCount, 5);
-  if (redDisplayed > 0) {
-    stacks.push({ color: 'red', count: redDisplayed });
-    remaining -= redDisplayed * 5;
-  }
-
-  // White chips = $1
-  const whiteDisplayed = Math.min(remaining, 5);
-  if (whiteDisplayed > 0) {
-    stacks.push({ color: 'white', count: whiteDisplayed });
-  }
-
-  // Always show at least one chip
-  if (stacks.length === 0) {
-    stacks.push({ color: 'white', count: 1 });
-  }
-
-  return stacks;
 }

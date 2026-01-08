@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
-import { PokerTableComponent, PotInfo, SeatPosition } from './poker-table/poker-table.component';
+import { PokerTableComponent, SeatPosition } from './poker-table/poker-table.component';
 import { PlayerSeatComponent, PlayerData } from './player-seat';
+import { type Pot, createMainPot, createSidePot } from './pot-display';
 import { Card } from '../../shared/models/card.models';
 
 /**
@@ -19,7 +20,7 @@ import { Card } from '../../shared/models/card.models';
     <!-- Poker Table -->
     <app-poker-table
       [communityCards]="communityCards()"
-      [pot]="pot()"
+      [pots]="pots()"
       [dealerPosition]="dealerPosition()"
     >
       <!-- Player seats -->
@@ -32,14 +33,16 @@ import { Card } from '../../shared/models/card.models';
       }
     </app-poker-table>
   `,
-  styles: [`
-    :host {
-      display: block;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-    }
-  `]
+  styles: [
+    `
+      :host {
+        display: block;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+      }
+    `,
+  ],
 })
 export class GamePageComponent {
   /** Demo community cards */
@@ -48,14 +51,15 @@ export class GamePageComponent {
     { rank: 'K', suit: 'diamonds' },
     { rank: 'Q', suit: 'spades' },
     { rank: '10', suit: 'clubs' },
-    { rank: '7', suit: 'hearts' }
+    { rank: '7', suit: 'hearts' },
   ]);
 
-  /** Demo pot */
-  pot = signal<PotInfo>({
-    label: 'Main Pot',
-    amount: 327
-  });
+  /** Demo pots (main pot + side pots) */
+  pots = signal<Pot[]>([
+    createMainPot(327),
+    createSidePot(1, 150, ['1', '2', '4']),
+    createSidePot(2, 75, ['1', '2']),
+  ]);
 
   /** Demo dealer position */
   dealerPosition = signal<SeatPosition>('top-right');
@@ -70,15 +74,18 @@ export class GamePageComponent {
         avatar: '🧑‍💼',
         chips: 1250,
         status: 'playing',
-        holeCards: [{ rank: 'A', suit: 'hearts' }, { rank: 'K', suit: 'hearts' }],
+        holeCards: [
+          { rank: 'A', suit: 'hearts' },
+          { rank: 'K', suit: 'hearts' },
+        ],
         holeCardsVisible: false,
         currentBet: 50,
         hasMic: true,
         hasVideo: true,
         isCurrentTurn: true,
         remainingTime: 18,
-        totalTime: 30
-      }
+        totalTime: 30,
+      },
     },
     {
       position: 'top-right',
@@ -88,16 +95,19 @@ export class GamePageComponent {
         avatar: '👨‍⚖️',
         chips: 980,
         status: 'playing',
-        holeCards: [{ rank: '7', suit: 'clubs' }, { rank: '8', suit: 'clubs' }],
+        holeCards: [
+          { rank: '7', suit: 'clubs' },
+          { rank: '8', suit: 'clubs' },
+        ],
         holeCardsVisible: false,
         currentBet: 50,
         hasMic: true,
-        hasVideo: true
-      }
+        hasVideo: true,
+      },
     },
     {
       position: 'right',
-      player: null // Empty seat
+      player: null, // Empty seat
     },
     {
       position: 'bottom-right',
@@ -107,9 +117,12 @@ export class GamePageComponent {
         avatar: '👨‍💻',
         chips: 1500,
         status: 'folded',
-        holeCards: [{ rank: '2', suit: 'spades' }, { rank: '7', suit: 'diamonds' }],
-        holeCardsVisible: false
-      }
+        holeCards: [
+          { rank: '2', suit: 'spades' },
+          { rank: '7', suit: 'diamonds' },
+        ],
+        holeCardsVisible: false,
+      },
     },
     {
       position: 'bottom-left',
@@ -119,12 +132,15 @@ export class GamePageComponent {
         avatar: '👩‍🎨',
         chips: 750,
         status: 'playing',
-        holeCards: [{ rank: 'Q', suit: 'hearts' }, { rank: 'J', suit: 'hearts' }],
+        holeCards: [
+          { rank: 'Q', suit: 'hearts' },
+          { rank: 'J', suit: 'hearts' },
+        ],
         holeCardsVisible: false,
         currentBet: 50,
         hasMic: true,
-        hasVideo: true
-      }
+        hasVideo: true,
+      },
     },
     {
       position: 'left',
@@ -134,10 +150,13 @@ export class GamePageComponent {
         avatar: '🧑‍🚀',
         chips: 0,
         status: 'all-in',
-        holeCards: [{ rank: 'A', suit: 'clubs' }, { rank: 'A', suit: 'diamonds' }],
+        holeCards: [
+          { rank: 'A', suit: 'clubs' },
+          { rank: 'A', suit: 'diamonds' },
+        ],
         holeCardsVisible: false,
-        currentBet: 500
-      }
+        currentBet: 500,
+      },
     },
     {
       position: 'top-left',
@@ -147,13 +166,16 @@ export class GamePageComponent {
         avatar: '👨‍🔬',
         chips: 1100,
         status: 'playing',
-        holeCards: [{ rank: 'K', suit: 'spades' }, { rank: 'Q', suit: 'diamonds' }],
+        holeCards: [
+          { rank: 'K', suit: 'spades' },
+          { rank: 'Q', suit: 'diamonds' },
+        ],
         holeCardsVisible: false,
         currentBet: 50,
         hasMic: true,
-        hasVideo: true
-      }
-    }
+        hasVideo: true,
+      },
+    },
   ]);
 
   /** Handle empty seat click */

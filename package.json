@@ -7,12 +7,13 @@
   },
   "lint-staged": {
     "src/LowRollers.Web/**/*.{ts,html}": [
-      "npm run --prefix src/LowRollers.Web -- ng lint --fix",
+      "eslint --fix --config src/LowRollers.Web/eslint.config.js",
       "npx prettier --write"
     ],
     "*.cs": "dotnet format --include"
   },
   "devDependencies": {
+    "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3"

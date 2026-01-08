@@ -211,7 +211,7 @@
   > - Card flip animation on deal
   > - Highlight winning cards at showdown
 
-- [ ] **Create pot display component**
+- [x] **Create pot display component**
   Task ID: `core-gameplay-16`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/pot-display/`
   > **Design Reference**: `docs/designs/poker-table-mockup-v2.html` - `.pot-display`, `.pot-chips`, `.pot-info`, `.chip-stack`
