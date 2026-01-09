@@ -137,9 +137,10 @@ import {
       }
 
       .quick-bet-sm.active {
-        background: #eab308;
-        border-color: #ca8a04;
-        color: #000;
+        background: #d97706;
+        border-color: #b45309;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
 
       .quick-bet-sm:disabled {

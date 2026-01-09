@@ -350,9 +350,9 @@ import { RaiseSliderComponent } from './raise-slider';
       }
 
       .action-btn .hotkey {
-        font-size: 10px;
-        opacity: 0.7;
-        font-weight: 500;
+        font-size: 11px;
+        opacity: 0.85;
+        font-weight: 600;
         margin-top: 2px;
       }
 
@@ -361,20 +361,23 @@ import { RaiseSliderComponent } from './raise-slider';
         background: linear-gradient(135deg, #4b5563, #374151);
         color: var(--text-primary);
         min-width: 100px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
 
-      /* Call/Check - Green */
+      /* Call/Check - Deeper Green for contrast */
       .btn-call {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
+        background: linear-gradient(135deg, #16a34a, #15803d);
         color: var(--text-primary);
         min-width: 100px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
 
-      /* Raise - Yellow/Gold */
+      /* Raise - Deeper Amber/Gold (white text with better contrast) */
       .btn-raise {
-        background: linear-gradient(135deg, #eab308, #ca8a04);
+        background: linear-gradient(135deg, #d97706, #b45309);
         color: var(--text-primary);
         min-width: 100px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
       }
 
       /* All-In - Red */
@@ -382,6 +385,7 @@ import { RaiseSliderComponent } from './raise-slider';
         background: linear-gradient(135deg, #dc2626, #b91c1c);
         color: var(--text-primary);
         min-width: 100px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
 
       /* ============ RESPONSIVE ============ */
