@@ -6,10 +6,11 @@ import {
   computed,
   model,
   effect,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SliderModule } from 'primeng/slider';
-import { InputNumberModule } from 'primeng/inputnumber';
+import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
 
 import {
   type BettingContext,
@@ -57,8 +58,10 @@ import {
 
       <!-- Number Input -->
       <p-inputNumber
+        #amountInput
         [ngModel]="amount()"
         (ngModelChange)="onAmountChange($event)"
+        (onKeyDown)="onInputKeyDown($event)"
         [min]="minValue()"
         [max]="maxValue()"
         [disabled]="disabled()"
@@ -248,6 +251,9 @@ import {
   ],
 })
 export class RaiseSliderComponent {
+  /** Reference to the PrimeNG InputNumber component */
+  private amountInput = viewChild<InputNumber>('amountInput');
+
   /** Betting context with min/max values and pot info */
   bettingContext = input<BettingContext | null>(null);
 
@@ -268,6 +274,9 @@ export class RaiseSliderComponent {
 
   /** Emits when a quick bet preset is selected */
   quickBetSelected = output<QuickBetPreset>();
+
+  /** Emits when Enter is pressed in the input (signals raise submission) */
+  enterPressed = output<void>();
 
   /** Minimum raise value */
   minValue = computed(() => this.bettingContext()?.minRaise ?? 0);
@@ -334,5 +343,42 @@ export class RaiseSliderComponent {
 
     const amount = calculateQuickBetAmount(preset, ctx);
     return `Set raise to ${formatCurrency(amount)} (${preset.label})`;
+  }
+
+  /** Handle keydown in the input field */
+  onInputKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.enterPressed.emit();
+    }
+  }
+
+  /**
+   * Focus the amount input and select all text.
+   * Called by parent when user starts typing a number.
+   */
+  focusAndClear(): void {
+    const inputComponent = this.amountInput();
+    if (inputComponent?.input) {
+      const nativeInput = inputComponent.input.nativeElement as HTMLInputElement;
+      nativeInput.focus();
+      nativeInput.select();
+    }
+  }
+
+  /**
+   * Focus the input, clear it, and set an initial digit.
+   * @param digit The digit that was typed (0-9)
+   */
+  focusWithDigit(digit: string): void {
+    const inputComponent = this.amountInput();
+    if (inputComponent?.input) {
+      const nativeInput = inputComponent.input.nativeElement as HTMLInputElement;
+      nativeInput.focus();
+      // Clear the input and set the digit
+      // PrimeNG InputNumber will handle the formatting
+      nativeInput.value = digit;
+      nativeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   }
 }

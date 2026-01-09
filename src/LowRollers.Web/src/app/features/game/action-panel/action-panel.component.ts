@@ -7,6 +7,7 @@ import {
   linkedSignal,
   HostListener,
   inject,
+  viewChild,
 } from '@angular/core';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
@@ -136,11 +137,13 @@ import { RaiseSliderComponent } from './raise-slider';
 
           @if (canRaiseComputed()) {
             <app-raise-slider
+              #raiseSlider
               [(amount)]="raiseAmount"
               [bettingContext]="bettingContext()"
               [quickBetPresets]="quickBetPresets()"
               [showQuickBets]="showQuickBets()"
               [disabled]="!isActive()"
+              (enterPressed)="onRaise()"
             />
           }
         </div>
@@ -415,6 +418,9 @@ import { RaiseSliderComponent } from './raise-slider';
 export class ActionPanelComponent {
   private confirmationService = inject(ConfirmationService);
 
+  /** Reference to the raise slider component for keyboard input forwarding */
+  private raiseSlider = viewChild<RaiseSliderComponent>('raiseSlider');
+
   /** Current player state */
   player = input<CurrentPlayerState | null>(null);
 
@@ -501,6 +507,13 @@ export class ActionPanelComponent {
       return;
     }
 
+    // Handle number keys (0-9) - forward to raise slider for direct amount entry
+    if (/^[0-9]$/.test(event.key) && this.canRaiseComputed()) {
+      event.preventDefault();
+      this.raiseSlider()?.focusWithDigit(event.key);
+      return;
+    }
+
     switch (event.key.toUpperCase()) {
       case 'F':
         event.preventDefault();
@@ -517,7 +530,8 @@ export class ActionPanelComponent {
       case 'R':
         event.preventDefault();
         if (this.canRaiseComputed()) {
-          this.onRaise();
+          // Focus the raise input for manual entry
+          this.raiseSlider()?.focusAndClear();
         }
         break;
       case 'A':
