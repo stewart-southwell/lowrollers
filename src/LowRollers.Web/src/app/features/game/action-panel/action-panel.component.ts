@@ -8,9 +8,6 @@ import {
   HostListener,
   inject,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { SliderModule } from 'primeng/slider';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 
@@ -23,12 +20,12 @@ import {
   formatCurrency,
   formatTime,
   calculateCallAmount,
-  calculateQuickBetAmount,
   canCheck,
   canRaise,
   isAllInAmount,
   validateRaiseAmount,
 } from './action-panel.models';
+import { RaiseSliderComponent } from './raise-slider';
 
 /**
  * Action panel component for poker player actions.
@@ -45,7 +42,7 @@ import {
 @Component({
   selector: 'app-action-panel',
   standalone: true,
-  imports: [FormsModule, SliderModule, InputNumberModule, ConfirmDialogModule],
+  imports: [ConfirmDialogModule, RaiseSliderComponent],
   providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -138,36 +135,13 @@ import {
           </button>
 
           @if (canRaiseComputed()) {
-            <p-slider
-              [ngModel]="raiseAmount()"
-              (ngModelChange)="onRaiseAmountChange($event)"
-              [min]="bettingContext()?.minRaise ?? 0"
-              [max]="bettingContext()?.maxRaise ?? 100"
-              [step]="sliderStep()"
-              styleClass="raise-slider"
+            <app-raise-slider
+              [(amount)]="raiseAmount"
+              [bettingContext]="bettingContext()"
+              [quickBetPresets]="quickBetPresets()"
+              [showQuickBets]="showQuickBets()"
+              [disabled]="!isActive()"
             />
-            <p-inputNumber
-              [ngModel]="raiseAmount()"
-              (ngModelChange)="onRaiseAmountChange($event)"
-              [min]="bettingContext()?.minRaise ?? 0"
-              [max]="bettingContext()?.maxRaise ?? 100"
-              mode="currency"
-              currency="USD"
-              locale="en-US"
-              [maxFractionDigits]="0"
-              inputStyleClass="raise-input"
-            />
-
-            <!-- Inline Quick Bet Buttons -->
-            @if (showQuickBets()) {
-              <div class="quick-bet-inline">
-                @for (preset of quickBetPresets(); track preset.label) {
-                  <button class="quick-bet-sm" (click)="onQuickBet(preset)">
-                    {{ preset.label }}
-                  </button>
-                }
-              </div>
-            }
           }
         </div>
 
@@ -341,33 +315,7 @@ import {
       .raise-group {
         display: flex;
         align-items: center;
-        gap: 16px;
-        background: #2a2d36;
-        padding: 6px 16px;
-        border-radius: 8px;
-      }
-
-      /* ============ QUICK BET BUTTONS (INLINE) ============ */
-      .quick-bet-inline {
-        display: flex;
-        gap: 6px;
-      }
-
-      .quick-bet-sm {
-        background: #4a4d56;
-        border: 1px solid #5a5d66;
-        color: #e5e7eb;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.15s;
-      }
-
-      .quick-bet-sm:hover {
-        background: #5a5d66;
-        color: #fff;
+        gap: 8px;
       }
 
       /* ============ ACTION BUTTONS ============ */
@@ -436,45 +384,6 @@ import {
         min-width: 100px;
       }
 
-      /* ============ SLIDER CUSTOMIZATION ============ */
-      :host ::ng-deep .raise-slider {
-        width: 200px;
-        margin-left: 8px;
-      }
-
-      :host ::ng-deep .raise-slider .p-slider-range {
-        background: linear-gradient(135deg, #eab308, #ca8a04);
-      }
-
-      :host ::ng-deep .raise-slider .p-slider-handle {
-        background: linear-gradient(135deg, #eab308, #ca8a04);
-        border-color: #eab308;
-        box-shadow: 0 2px 6px rgba(234, 179, 8, 0.4);
-      }
-
-      :host ::ng-deep .raise-slider .p-slider-handle:hover {
-        background: #ca8a04;
-        border-color: #ca8a04;
-      }
-
-      /* ============ INPUT CUSTOMIZATION ============ */
-      :host ::ng-deep .raise-input {
-        width: 70px;
-        padding: 6px 8px;
-        background: #1a1d26;
-        border: 1px solid #444;
-        border-radius: 6px;
-        color: var(--text-primary);
-        font-size: 14px;
-        font-weight: 600;
-        text-align: center;
-      }
-
-      :host ::ng-deep .raise-input:focus {
-        border-color: #eab308;
-        box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2);
-      }
-
       /* ============ RESPONSIVE ============ */
       @media (max-width: 900px) {
         .action-panel {
@@ -493,31 +402,7 @@ import {
         }
 
         .raise-group {
-          padding: 4px 8px;
           gap: 6px;
-        }
-
-        .quick-bet-sm {
-          padding: 6px 8px;
-          font-size: 11px;
-        }
-
-        :host ::ng-deep .raise-slider {
-          width: 140px;
-        }
-
-        :host ::ng-deep .raise-input {
-          width: 60px;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .quick-bet-inline {
-          display: none;
-        }
-
-        :host ::ng-deep .raise-slider {
-          width: 120px;
         }
       }
     `,
@@ -602,16 +487,6 @@ export class ActionPanelComponent {
   /** Format time utility */
   formatTime = formatTime;
 
-  /** Handle raise amount change from slider or input */
-  onRaiseAmountChange(value: number): void {
-    const ctx = this.bettingContext();
-    if (!ctx) return;
-
-    // Clamp value to valid range
-    const clampedValue = Math.max(ctx.minRaise, Math.min(value, ctx.maxRaise));
-    this.raiseAmount.set(clampedValue);
-  }
-
   /** Handle keyboard hotkeys */
   @HostListener('window:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
@@ -646,15 +521,6 @@ export class ActionPanelComponent {
         this.onAllIn();
         break;
     }
-  }
-
-  /** Handle quick bet preset click */
-  onQuickBet(preset: QuickBetPreset): void {
-    const ctx = this.bettingContext();
-    if (!ctx) return;
-
-    const amount = calculateQuickBetAmount(preset, ctx);
-    this.raiseAmount.set(amount);
   }
 
   /** Fold action */

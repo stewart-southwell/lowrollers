@@ -83,15 +83,16 @@
   > **Implementation**: Create `src/LowRollers.Api/Domain/Events/`
   > **Details**:
   > - `IHandEvent` interface: HandId, Timestamp
-  > - Events:
-  >   - `BlindsPosted` - SmallBlind, BigBlind amounts
-  >   - `HoleCardsDealt` - Player → Cards mapping (encrypted/hashed for storage)
-  >   - `PlayerActed` - PlayerId, Action, Amount
-  >   - `CommunityCardsDealt` - Cards, Phase
-  >   - `PotAwarded` - WinnerId, Amount, HandDescription
-  >   - `HandCompleted` - Summary
+  > - Events map to `SessionHandEvents` table:
+  >   - `BlindsPosted` - EventTypeId: SB/BB, Amount, PlayerId
+  >   - `HoleCardsDealt` - EventTypeId: Deal, PlayerId: NULL (system event), EventDetails JSON
+  >   - `PlayerActed` - EventTypeId: Check/Bet/Fold/etc., PlayerId, Amount
+  >   - `CommunityCardsDealt` - EventTypeId: Flop/Turn/River, PlayerId: NULL (system event), EventDetails JSON
+  >   - `PotAwarded` - EventTypeId: Winner, PlayerId, Amount, EventDetails JSON
+  >   - `HandCompleted` - EventTypeId: HandEnd, PlayerId: NULL
   > - `HandEventStore.cs` - Append, GetEvents(handId)
-  > - Store as JSON in PostgreSQL
+  > - Store in Azure SQL `SessionHandEvents` table (PlayerId NULL for system events)
+  > - Use SQL Server Database Project for schema
 
 ---
 
@@ -244,17 +245,19 @@
   > - Use PrimeNG Button, ConfirmDialog
   > - Disable when not player's turn
 
-- [ ] **Create raise slider component**
+- [x] **Create raise slider component**
   Task ID: `core-gameplay-18`
   > **Implementation**: Create `src/LowRollers.Web/src/app/features/game/action-panel/raise-slider/`
   > **Design Reference**: `docs/designs/poker-table-mockup-v4.html` - `.raise-control`, `.raise-slider`, `.raise-input`
   > **Details**:
-  > - Dark container with "Raise to:" label
+  > - Dark container with optional "Raise to:" label (default: hidden since adjacent to Raise button)
   > - Slider from min raise to max (all-in)
-  > - Blue slider thumb with shadow
+  > - Yellow/gold slider thumb matching design
   > - Number input for exact amount
-  > - Quick bet buttons: 2BB, 3BB, 1/2 Pot, POT, MAX
+  > - Quick bet buttons: 2BB, 3BB, 1/2 Pot, POT, 2x Pot
   > - Use PrimeNG Slider, InputNumber
+  > - Accessibility: aria-labels on all interactive elements
+  > - Effect-based value clamping when betting context changes
 
 - [ ] **Create action timer component**
   Task ID: `core-gameplay-19`

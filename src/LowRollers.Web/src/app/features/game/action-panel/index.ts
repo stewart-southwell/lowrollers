@@ -1,4 +1,5 @@
 export { ActionPanelComponent } from './action-panel.component';
+export { RaiseSliderComponent } from './raise-slider';
 export {
   type PlayerActionType,
   type CurrentPlayerState,
