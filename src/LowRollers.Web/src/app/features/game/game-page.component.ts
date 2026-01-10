@@ -127,7 +127,7 @@ export class GamePageComponent {
         hasMic: true,
         hasVideo: true,
         isCurrentTurn: true,
-        remainingTime: 18,
+        remainingTime: 5,
         totalTime: 30,
       },
     },

@@ -1,6 +1,8 @@
 import { Component, ChangeDetectionStrategy, input, computed, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardComponent } from '../../../shared/card/card.component';
+import { ActionTimerComponent } from '../action-timer';
+import { formatCurrency } from '../../../shared/utils/format.utils';
 import {
   PlayerData,
   SeatPosition,
@@ -67,14 +69,6 @@ const SEAT_POSITIONS: Record<SeatPosition, Record<string, string>> = {
   'top-left': calculateSeatPosition('top-left'),
 };
 
-/** Cached currency formatter for performance */
-const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
-
 /**
  * Player seat component displaying a player's avatar, info, cards, and bet.
  * Handles all player states: playing, folded, all-in, sitting-out, and empty seat.
@@ -82,7 +76,7 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', {
 @Component({
   selector: 'app-player-seat',
   standalone: true,
-  imports: [CommonModule, CardComponent],
+  imports: [CommonModule, CardComponent, ActionTimerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="player-seat" [ngStyle]="seatPositionStyle()" [class.empty-seat]="!player()">
@@ -122,25 +116,6 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', {
                   }
                 </div>
               }
-
-              <!-- Action timer bar (only for current turn) -->
-              @if (p.isCurrentTurn && p.remainingTime !== undefined) {
-                <div class="action-timer-bar">
-                  <div
-                    class="timer-bar-progress"
-                    [style.width.%]="timerPercentage()"
-                    [class.warning]="timerPercentage() < 50"
-                    [class.danger]="timerPercentage() < 20"
-                  ></div>
-                </div>
-                <span
-                  class="timer-text"
-                  [class.warning]="timerPercentage() < 50"
-                  [class.danger]="timerPercentage() < 20"
-                >
-                  {{ formatTime(p.remainingTime) }}
-                </span>
-              }
             </div>
 
             <!-- Hole cards (below avatar) -->
@@ -168,6 +143,14 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', {
           >
             <div class="player-name">{{ p.name }}</div>
             <div class="player-chips">{{ formatCurrency(p.chips) }}</div>
+            <!-- Action timer (only for current turn) -->
+            @if (p.isCurrentTurn && p.remainingTime !== undefined && p.totalTime) {
+              <app-action-timer
+                [remainingSeconds]="p.remainingTime"
+                [totalSeconds]="p.totalTime"
+                variant="bar"
+              />
+            }
             @if (p.status === 'folded') {
               <div class="folded-label">Folded</div>
             }
@@ -329,60 +312,6 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', {
         height: 12px;
         stroke: var(--accent-green);
         fill: none;
-      }
-
-      /* ============ ACTION TIMER ============ */
-      .action-timer-bar {
-        position: absolute;
-        bottom: -8px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80px;
-        height: 6px;
-        background: rgba(0, 0, 0, 0.5);
-        border-radius: 3px;
-        overflow: hidden;
-        z-index: 20;
-      }
-
-      .timer-bar-progress {
-        height: 100%;
-        background: #22c55e;
-        border-radius: 3px;
-        transition:
-          width var(--animation-very-slow) linear,
-          background var(--animation-normal);
-      }
-
-      .timer-bar-progress.warning {
-        background: #eab308;
-      }
-
-      .timer-bar-progress.danger {
-        background: #ef4444;
-      }
-
-      .timer-text {
-        position: absolute;
-        bottom: -26px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--bg-glass);
-        color: #22c55e;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: var(--radius-sm);
-        font-family: 'SF Mono', 'Monaco', monospace;
-        z-index: 20;
-      }
-
-      .timer-text.warning {
-        color: #eab308;
-      }
-
-      .timer-text.danger {
-        color: #ef4444;
       }
 
       /* ============ HOLE CARDS ============ */
@@ -576,26 +505,8 @@ export class PlayerSeatComponent {
     return amountToChipStacks(p.currentBet);
   });
 
-  /** Calculate timer percentage */
-  timerPercentage = computed(() => {
-    const p = this.player();
-    if (!p?.remainingTime || !p?.totalTime) return 100;
-    return (p.remainingTime / p.totalTime) * 100;
-  });
-
   /** Format currency for display */
-  formatCurrency(amount: number): string {
-    return CURRENCY_FORMATTER.format(amount);
-  }
-
-  /** Format time in seconds to display string */
-  formatTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return mins > 0
-      ? `${mins}:${secs.toString().padStart(2, '0')}`
-      : `0:${secs.toString().padStart(2, '0')}`;
-  }
+  formatCurrency = formatCurrency;
 
   /** Shared utility - create array for ngFor iteration */
   createChipArray = createChipArray;

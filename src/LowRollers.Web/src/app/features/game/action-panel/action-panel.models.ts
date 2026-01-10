@@ -2,6 +2,14 @@
  * Action panel models and interfaces.
  */
 
+// Import and re-export shared formatting utilities
+import {
+  formatCurrency as _formatCurrency,
+  formatTime as _formatTime,
+} from '../../../shared/utils/format.utils';
+export const formatCurrency = _formatCurrency;
+export const formatTime = _formatTime;
+
 /**
  * Player action types available in Texas Hold'em.
  */
@@ -98,32 +106,6 @@ export interface PlayerActionEvent {
   action: PlayerActionType;
   /** Amount (for raise) */
   amount?: number;
-}
-
-/**
- * Cached currency formatter for display.
- */
-const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
-
-/**
- * Format currency for display.
- */
-export function formatCurrency(amount: number): string {
-  return CURRENCY_FORMATTER.format(amount);
-}
-
-/**
- * Format time in seconds to display string.
- */
-export function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 /**
